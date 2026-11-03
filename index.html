@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#000000">
 <title>VaultAI - Air-Gapped Forensic Enclave</title>
+
+<!-- Libreria PDF.js per la lettura del testo chiaro dai PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
 <style>
   :root {
     --bg: #000000; 
@@ -31,6 +35,7 @@
   
   button { width: 100%; padding: 14px; margin-top: 12px; border-radius: 8px; border: none; background: var(--accent); color: #000; font-weight: bold; font-size: 15px; cursor: pointer; transition: transform 0.1s; display: flex; justify-content: center; align-items: center; gap: 8px;}
   button:active { transform: scale(0.97); }
+  button:disabled { opacity: 0.6; cursor: not-allowed; }
   button.secondary { background: #222; color: var(--text); border: 1px solid #333; }
   button.danger { background: rgba(255,59,92,0.1); color: var(--danger); border: 1px solid var(--danger); }
   button.upload { background: rgba(0, 230, 118, 0.15); color: var(--success); border: 1px solid rgba(0, 230, 118, 0.4); }
@@ -90,10 +95,10 @@
       
       <!-- Sezione Upload File -->
       <input type="file" id="fileUpload" multiple style="display:none;" onchange="handleFileUpload(event)">
-      <button class="upload" onclick="document.getElementById('fileUpload').click()">
-        📁 Seleziona File dal Dispositivo (TXT, PDF, DOCX, CSV...)
+      <button class="upload" id="uploadBtn" onclick="document.getElementById('fileUpload').click()">
+        📁 Seleziona File dal Dispositivo (TXT, PDF, CSV...)
       </button>
-      <p style="font-size:11px; color:#888; margin-top:8px;">I file complessi (PDF, DOCX) vengono decostruiti in locale tramite <b>Strings Carving</b> per estrarre le entità senza usare server esterni o reti neurali pesanti.</p>
+      <p style="font-size:11px; color:#888; margin-top:8px;">I PDF vengono scansionati localmente. Nessun dato lascia il dispositivo.</p>
       
       <hr style="border: 0; border-top: 1px solid #222; margin: 16px 0;">
       
@@ -142,11 +147,15 @@
 </div>
 
 <script>
+// --- CONFIGURAZIONE PDF.JS ---
+if (window['pdfjs-dist/build/pdf']) {
+  window['pdfjs-dist/build/pdf'].GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+}
+
 // --- DATI PRE-CARICATI ---
 const seedMaster = [
   { title: "Bilancio_Iniziale.txt", content: "Revisione segreta del 15/02/2026. Trovato ammanco di € 450.000. Bonifico su IBAN CH9300000000000000000. Contattare mario@azienda.com." }
 ];
-
 const seedDecoy = [
   { title: "Fattura_Cancelleria.txt", content: "Acquisto penne per € 120,50. Fornitore: info@cartoleria.it." }
 ];
@@ -237,31 +246,57 @@ async function loadSeed(seedArray) {
   renderDocs();
 }
 
-// --- GESTIONE UPLOAD FILE E "STRINGS CARVING" FORENSE ---
+// --- GESTIONE UPLOAD FILE (TESTO E PDF) ---
 async function handleFileUpload(event) {
   const files = event.target.files;
   if (!files || files.length === 0) return;
 
+  const uploadBtn = document.getElementById('uploadBtn');
+  const originalText = uploadBtn.innerHTML;
+  uploadBtn.innerHTML = "⏳ Elaborazione in corso...";
+  uploadBtn.disabled = true;
+
+  let processati = 0;
+
   for (let file of files) {
-    const text = await extractStringsFromFile(file);
-    await processDoc(file.name, text);
+    try {
+      const text = await extractTextFromFile(file);
+      await processDoc(file.name, text);
+      processati++;
+    } catch (e) {
+      console.error(`Errore nel processare ${file.name}:`, e);
+    }
   }
   
   renderDocs();
   if(document.getElementById('tab-graph').style.display === 'block') initGraph();
-  event.target.value = ""; // Resetta l'input
-  alert(`${files.length} file processati e indicizzati con successo.`);
+  event.target.value = ""; // Resetta input
+  
+  uploadBtn.innerHTML = originalText;
+  uploadBtn.disabled = false;
+  
+  // Timeout per dare alla UI il tempo di aggiornarsi prima dell'alert bloccante
+  setTimeout(() => alert(`${processati} file processati e indicizzati con successo.`), 100);
 }
 
-function extractStringsFromFile(file) {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      // Se è un file di testo semplice (csv, txt, json)
-      if (file.type.startsWith('text/') || file.name.endsWith('.csv') || file.name.endsWith('.json')) {
-        resolve(e.target.result);
-      } else {
-        // Se è un PDF/DOCX/Immagine (Binario), facciamo il Data Carving dei caratteri stampabili
+async function extractTextFromFile(file) {
+  // Se è un PDF ed è disponibile la libreria (Utente ha la connessione la prima volta)
+  if (file.type === 'application/pdf' && window['pdfjs-dist/build/pdf']) {
+    return await extractTextFromPDF(file);
+  } 
+  // File di testo semplici
+  else if (file.type.startsWith('text/') || file.name.endsWith('.csv') || file.name.endsWith('.json')) {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.readAsText(file);
+    });
+  } 
+  // Fallback offline puro (Strings Carving binario come rete di sicurezza per file sconosciuti o offline totale)
+  else {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
         const buffer = e.target.result;
         const bytes = new Uint8Array(buffer);
         let text = "[ESTRAZIONE FORENSE BINARIA]\n";
@@ -269,27 +304,43 @@ function extractStringsFromFile(file) {
         
         for(let i=0; i<bytes.length; i++) {
           const charCode = bytes[i];
-          // Filtro caratteri ASCII leggibili e ritorni a capo
           if ((charCode >= 32 && charCode <= 126) || charCode === 10 || charCode === 13) {
             currentStr += String.fromCharCode(charCode);
           } else {
-            if (currentStr.trim().length > 3) { // Salva solo stringhe sensate (>3 char)
-              text += currentStr.trim() + " ";
-            }
+            if (currentStr.trim().length > 4) text += currentStr.trim() + " ";
             currentStr = "";
           }
         }
-        if(currentStr.trim().length > 3) text += currentStr;
-        // Pulisce spazi multipli
+        if(currentStr.trim().length > 4) text += currentStr;
         resolve(text.replace(/\s{2,}/g, ' '));
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
+}
+
+async function extractTextFromPDF(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        const typedarray = new Uint8Array(e.target.result);
+        const pdf = await window['pdfjs-dist/build/pdf'].getDocument(typedarray).promise;
+        let fullText = "";
+        
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map(item => item.str).join(' ');
+          fullText += pageText + "\n";
+        }
+        resolve(fullText);
+      } catch (error) {
+        reject(error);
       }
     };
-    
-    if (file.type.startsWith('text/') || file.name.endsWith('.csv') || file.name.endsWith('.json')) {
-      reader.readAsText(file);
-    } else {
-      reader.readAsArrayBuffer(file);
-    }
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
   });
 }
 
@@ -300,7 +351,7 @@ function extractEntities(text) {
     'iban': /\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/g,
     'importo': /(?:€|EUR)\s?\d+(?:[.,]\d+)?/gi,
     'data': /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g,
-    'cf': /\b[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]\b/gi // Codice Fiscale
+    'cf': /\b[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]\b/gi
   };
   let entities = [];
   for (let [type, regex] of Object.entries(rules)) {
@@ -348,8 +399,7 @@ function renderDocs() {
     if(query && !doc.title.toLowerCase().includes(query) && !doc.content.toLowerCase().includes(query)) return;
     const tagsHTML = doc.entities.map(e => `<span class="entity-tag ${e.type}">${e.type.toUpperCase()}: ${e.val}</span>`).join('');
     
-    // Mostra solo i primi 300 caratteri per evitare di impallare il telefono se si carica un PDF da 10MB
-    const displayContent = doc.content.length > 300 ? doc.content.substring(0, 300) + '... <i>[Troncato per visualizzazione]</i>' : doc.content;
+    const displayContent = doc.content.length > 400 ? doc.content.substring(0, 400) + '... <i>[Testo lungo troncato visivamente per non rallentare l\'app]</i>' : doc.content;
     
     list.innerHTML += `
       <div class="card" style="border-left: 3px solid var(--accent); padding: 12px;">
@@ -422,7 +472,7 @@ async function exportHTMLBundle() {
   a.click();
 }
 
-// --- GRAFO FORCE-DIRECTED (Risolto Bug Animazione e Sovrapposizioni) ---
+// --- GRAFO FORCE-DIRECTED ---
 let graphNodes = [];
 let graphEdges = [];
 let animFrame = null;
@@ -493,7 +543,7 @@ function updateGraph() {
 
   ctx.clearRect(0, 0, w, h);
   
-  // Limita i bordi e applica attrito
+  // Limiti bordi e attrito
   graphNodes.forEach(n => {
     if(n !== dragNode) {
       n.x += n.vx; n.y += n.vy;
@@ -523,7 +573,6 @@ function updateGraph() {
   animFrame = requestAnimationFrame(updateGraph);
 }
 
-// Gestione Touch / S-Pen per il canvas
 const canvas = document.getElementById('graphCanvas');
 function getPointerPos(e) {
   const rect = canvas.getBoundingClientRect();
@@ -549,8 +598,8 @@ function handleDragMove(pos) {
 function switchTab(tabId) {
   ['docs', 'graph', 'forensic'].forEach(t => document.getElementById('tab-'+t).style.display = t===tabId ? 'block' : 'none');
   document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', ['docs', 'graph', 'forensic'][i] === tabId));
-  if(tabId === 'graph') initGraph(); // Ricostruisce pulito
-  if(tabId !== 'graph' && animFrame) { cancelAnimationFrame(animFrame); animFrame = null; } // Risparmia batteria
+  if(tabId === 'graph') initGraph(); 
+  if(tabId !== 'graph' && animFrame) { cancelAnimationFrame(animFrame); animFrame = null; } 
 }
 </script>
 </body>
