@@ -4,27 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#000000">
-<title>VaultAI - Air-Gapped Forensic Enclave</title>
+<title>VaultAI - Zero-Footprint Enclave</title>
 
-<!-- PDF.js per l'estrazione ottimale del testo dai PDF -->
+<!-- PDF.js via CDN (Carica solo 1MB in cache, nessun modello pesante) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
 <style>
   :root {
-    --bg: #000000; --card: #111111; --card-hover: #161616;
+    --bg: #000000; --card: #111111; 
     --accent: #00e5ff; --accent-dim: rgba(0, 229, 255, 0.15);
     --text: #e2e8f0; --text-muted: #8b9bb4;
-    --danger: #ff3b5c; --success: #00e676; --warning: #ffb300;
+    --danger: #ff3b5c; --success: #00e676; 
     --border: #222222; --border-light: #333333;
   }
   * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
   body { margin: 0; background: var(--bg); color: var(--text); overflow-x: hidden; padding-bottom: 60px; }
   
-  header { background: rgba(17,17,17,0.8); backdrop-filter: blur(10px); padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+  header { background: rgba(17,17,17,0.85); backdrop-filter: blur(10px); padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
   .badge { background: var(--accent-dim); color: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; border: 1px solid rgba(0,229,255,0.3); }
   
   .container { padding: 16px; max-width: 900px; margin: auto; }
-  
   .card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); transition: 0.2s ease; }
   h2, h3 { margin: 0 0 12px 0; color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; gap: 8px; }
   
@@ -44,16 +43,22 @@
   
   .tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
   .tabs::-webkit-scrollbar { display: none; }
-  .tab { flex: 1; min-width: 110px; text-align: center; padding: 12px; background: var(--card); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); color: var(--text-muted); transition: 0.2s; }
+  .tab { flex: 1; min-width: 100px; text-align: center; padding: 12px; background: var(--card); border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); color: var(--text-muted); transition: 0.2s; white-space: nowrap; }
   .tab.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
   
+  /* Timeline CSS */
+  .timeline { border-left: 2px solid var(--border-light); margin-left: 16px; padding-left: 20px; display: flex; flex-direction: column; gap: 24px; position: relative; margin-top: 20px; }
+  .tl-item { position: relative; }
+  .tl-dot { position: absolute; left: -27px; top: 0; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid #000; }
+  .tl-date { font-size: 13px; font-weight: 800; color: var(--accent); margin-bottom: 4px; letter-spacing: 1px; }
+  .tl-content { background: #0a0a0a; border: 1px solid var(--border-light); padding: 12px; border-radius: 8px; font-size: 13px; color: #ccc; }
+  
+  /* Classificazione Dati */
   .doc-record { border: 1px solid var(--border-light); border-radius: 10px; background: #0a0a0a; margin-bottom: 16px; overflow: hidden; }
   .doc-header { background: #141414; padding: 12px 16px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; }
-  .doc-title { font-weight: 600; font-size: 14px; color: #fff; display: flex; align-items: center; gap: 8px; }
+  .doc-title { font-weight: 600; font-size: 14px; color: #fff; }
   .doc-hash { font-family: 'Courier New', monospace; font-size: 11px; color: var(--text-muted); }
-  
   .doc-body { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
-  
   .entity-group { background: #111; border: 1px solid #222; border-radius: 8px; padding: 12px; }
   .entity-group-title { font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 1px; }
   .entity-chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -63,7 +68,6 @@
   .chip-iban { color: #ffeb3b; border-color: rgba(255,235,59,0.3); background: rgba(255,235,59,0.05); }
   .chip-importo { color: #00e676; border-color: rgba(0,230,118,0.3); background: rgba(0,230,118,0.05); }
   .chip-cf { color: #e91e63; border-color: rgba(233,30,99,0.3); background: rgba(233,30,99,0.05); }
-  .chip-piva { color: #ff9800; border-color: rgba(255,152,0,0.3); background: rgba(255,152,0,0.05); }
   .chip-targa { color: #00bcd4; border-color: rgba(0,188,212,0.3); background: rgba(0,188,212,0.05); }
   .chip-tel { color: #9c27b0; border-color: rgba(156,39,176,0.3); background: rgba(156,39,176,0.05); }
   .chip-data { color: #795548; border-color: rgba(121,85,72,0.3); background: rgba(121,85,72,0.05); }
@@ -74,23 +78,23 @@
   .text-box-fade { position: absolute; bottom: 0; left: 0; right: 0; height: 40px; background: linear-gradient(transparent, #050505); cursor: pointer; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 4px; font-size: 11px; color: var(--accent); font-weight: bold; }
   
   .audit-log { font-family: 'Courier New', monospace; font-size: 12px; background: #050505; padding: 16px; border-radius: 8px; border: 1px solid #1a1a1a; max-height: 300px; overflow-y: auto; }
-  canvas { width: 100%; height: 450px; background: #050505; border-radius: 12px; border: 1px solid var(--border-light); touch-action: none; }
+  canvas { width: 100%; height: 450px; background: #050505; border-radius: 12px; border: 1px solid var(--border-light); touch-action: none; cursor: crosshair; }
   
   #lockScreen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; z-index: 9999; }
 </style>
 </head>
 <body>
 
-<!-- LOCK SCREEN -->
+<!-- LOCK SCREEN (RAM ONLY) -->
 <div id="lockScreen">
   <div style="text-align: center; max-width: 320px; width: 100%;">
     <h1 style="color:var(--accent); font-size: 36px; margin: 0 0 5px 0; letter-spacing: 2px;">VaultAI</h1>
-    <p style="color:var(--text-muted); font-size: 12px; margin-bottom: 30px; letter-spacing: 1px;">SECURE AIR-GAPPED ENCLAVE</p>
+    <p style="color:var(--danger); font-size: 11px; margin-bottom: 30px; letter-spacing: 1px; font-weight:bold;">ZERO-FOOTPRINT EDITION</p>
     <div class="card" style="padding: 24px;">
       <input type="password" id="pinInput" placeholder="PIN" style="text-align:center; font-size:28px; letter-spacing:12px; padding:16px;">
-      <button class="btn-primary" onclick="unlockVault()" style="width: 100%; margin-top: 10px;">DECRIPTA</button>
+      <button class="btn-primary" onclick="unlockVault()" style="width: 100%; margin-top: 10px;">DECRIPTA RAM</button>
       <p style="font-size:11px; color:#555; margin-top:20px; line-height: 1.6;">
-        Master PIN: <b>1234</b><br>Decoy PIN: <b>9999</b>
+        I dati vivono solo nella memoria volatile.<br>Master: <b>1234</b> | Decoy: <b>9999</b>
       </p>
     </div>
   </div>
@@ -99,87 +103,92 @@
 <header>
   <div style="font-weight: 800; font-size: 18px; letter-spacing: 1px;">VaultAI</div>
   <div id="modeIndicator" class="badge">LOCKED</div>
-  <button class="btn-secondary" style="width:auto; padding:6px 16px; margin:0; border-radius: 20px; font-size: 12px;" onclick="location.reload()">BLOCCA</button>
+  <button class="btn-secondary" style="width:auto; padding:6px 16px; margin:0; border-radius: 20px; font-size: 12px;" onclick="location.reload()">DISTRUGGI RAM</button>
 </header>
 
 <div class="container">
   <div class="tabs">
     <div class="tab active" onclick="switchTab('docs')">📄 Reperti</div>
+    <div class="tab" onclick="switchTab('timeline')">⏱️ Timeline</div>
     <div class="tab" onclick="switchTab('graph')">🕸️ Grafo</div>
     <div class="tab" onclick="switchTab('rules')">⚙️ Regole NER</div>
     <div class="tab" onclick="switchTab('forensic')">⛓️ Audit Log</div>
   </div>
 
-  <!-- TAB REPERTI -->
+  <!-- TAB 1: REPERTI -->
   <div id="tab-docs">
     <div class="card">
-      <h3>📁 Importazione Dati & File</h3>
+      <h3>📁 Acquisizione Reperti</h3>
       <input type="file" id="fileUpload" multiple style="display:none;" onchange="handleFileUpload(event)">
       <button class="btn-upload" id="uploadBtn" onclick="document.getElementById('fileUpload').click()">
         <span style="font-size:24px; margin-bottom:4px;">📥</span>
-        Seleziona File (PDF, TXT, CSV...)
-        <span style="font-size: 11px; color: var(--text-muted); font-weight: 400; margin-top: 4px;">Analisi locale 100% offline</span>
+        Carica File (PDF, TXT, CSV)
       </button>
       
-      <div style="text-align: center; margin: 16px 0; color: #444; font-size: 12px;">OPPURE INSERIMENTO MANUALE</div>
+      <div style="text-align: center; margin: 16px 0; color: #444; font-size: 12px;">INSERIMENTO TESTUALE MANUALE</div>
       
       <input type="text" id="docTitle" placeholder="ID Reperto (Es. Intercettazione_A)">
-      <textarea id="docContent" placeholder="Incolla qui il testo da analizzare..."></textarea>
+      <textarea id="docContent" placeholder="Incolla il testo qui..."></textarea>
       <div class="btn-group">
-        <button class="btn-primary" onclick="addDocument()">Indicizza e Classifica</button>
+        <button class="btn-primary" onclick="addDocument()">Indicizza Dati</button>
         <button class="btn-secondary" onclick="redactInput()">Oscura Dati</button>
       </div>
     </div>
 
     <div class="card">
-      <h3>🔍 Archivio Classificato</h3>
-      <input type="text" id="searchQuery" placeholder="Filtra per testo, IBAN, CF o targa..." oninput="renderDocs()">
+      <h3>🔍 Analisi & Ricerca</h3>
+      <input type="text" id="searchQuery" placeholder="Cerca qualsiasi parola, IBAN o nome..." oninput="renderDocs()">
       <div id="docsList" style="margin-top:20px;"></div>
     </div>
   </div>
 
-  <!-- TAB GRAFO -->
-  <div id="tab-graph" style="display:none;">
-    <div class="card" style="padding: 10px;">
-      <canvas id="graphCanvas"></canvas>
-      <div style="padding: 10px; font-size: 11px; color: var(--text-muted); text-align: center;">
-        Trascina i nodi con il dito o la S-Pen per esplorare le relazioni.
-      </div>
+  <!-- TAB 2: TIMELINE INVESTIGATIVA (NUOVA) -->
+  <div id="tab-timeline" style="display:none;">
+    <div class="card">
+      <h3>⏱️ Cronologia Eventi</h3>
+      <p style="font-size: 12px; color: var(--text-muted);">Generata automaticamente estraendo le date (GG/MM/AAAA) da tutti i reperti indicizzati.</p>
+      <div id="timelineContainer" class="timeline"></div>
     </div>
   </div>
 
-  <!-- TAB REGOLE NER -->
+  <!-- TAB 3: GRAFO -->
+  <div id="tab-graph" style="display:none;">
+    <div class="card" style="padding: 10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 10px 10px 10px;">
+        <h3 style="margin:0;">🕸️ Grafo (Tap per Focus Mode)</h3>
+        <button class="btn-secondary" style="width:auto; padding:4px 10px; font-size:11px;" onclick="resetFocus()">Reset Vista</button>
+      </div>
+      <canvas id="graphCanvas"></canvas>
+    </div>
+  </div>
+
+  <!-- TAB 4: REGOLE NER -->
   <div id="tab-rules" style="display:none;">
     <div class="card">
-      <h3>⚙️ Regole di Estrazione (NER)</h3>
-      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
-        Gestisci o aggiungi nuove regole basate su Espressioni Regolari (Regex) per estrarre informazioni mirate dai reperti.
-      </p>
-      
+      <h3>⚙️ Aggiungi Regole Personalizzate</h3>
       <div style="background: #0a0a0a; padding: 16px; border-radius: 8px; border: 1px solid var(--border-light); margin-bottom: 20px;">
-        <input type="text" id="ruleName" placeholder="Nome Entità (es. Numero Polizza)">
-        <input type="text" id="ruleRegex" placeholder="Pattern Regex (es. POL-\d{5})">
-        <button class="btn-primary" onclick="addCustomRule()">Aggiungi Regola</button>
+        <input type="text" id="ruleName" placeholder="Nome (es. Cripto Wallet)">
+        <input type="text" id="ruleRegex" placeholder="Regex (es. ^1[a-km-zA-HJ-NP-Z1-9]{25,34}$)">
+        <button class="btn-primary" onclick="addCustomRule()">Aggiungi e Applica</button>
       </div>
-      
       <div id="rulesList" style="display:flex; flex-direction:column; gap:8px;"></div>
     </div>
   </div>
 
-  <!-- TAB FORENSICA -->
+  <!-- TAB 5: FORENSICA -->
   <div id="tab-forensic" style="display:none;">
     <div class="card">
-      <h3>⛓️ Merkle Tree Audit Log</h3>
+      <h3>⛓️ Registro Audit (RAM)</h3>
       <div id="auditLog" class="audit-log"></div>
       <div class="btn-group" style="margin-top: 16px;">
-        <button class="btn-secondary" onclick="verifyIntegrity()">Verifica Integrità</button>
-        <button class="btn-danger" onclick="simulateTamper()">Simula Attacco</button>
+        <button class="btn-secondary" onclick="verifyIntegrity()">Verifica Catena</button>
+        <button class="btn-danger" onclick="simulateTamper()">Attacco Simulato</button>
       </div>
     </div>
     
     <div class="card">
-      <h3>📄 Esportazione</h3>
-      <button class="btn-primary" onclick="exportHTMLBundle()">Genera Fascicolo Forense (HTML)</button>
+      <h3>📄 Esportazione Report HTML</h3>
+      <button class="btn-primary" onclick="exportHTMLBundle()">Genera Fascicolo Finale</button>
     </div>
   </div>
 </div>
@@ -191,23 +200,26 @@ if (window['pdfjs-dist/build/pdf']) {
 
 let state = { mode: 'LOCKED', docs: [], audit: [] };
 
-// Regole NER Complete integrate (Finanziarie, Personali, Veicoli)
+// REGOLE NER DI BASE
 const coreRules = {
   'email': { regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, class: 'chip-email', label: 'E-Mail' },
   'iban': { regex: /\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/g, class: 'chip-iban', label: 'IBAN' },
   'importo': { regex: /(?:€|EUR)\s?\d{1,3}(?:\.\d{3})*(?:,\d{2})?|\d{1,3}(?:\.\d{3})*(?:,\d{2})?\s?(?:€|EUR)/gi, class: 'chip-importo', label: 'Importo' },
   'cf': { regex: /\b[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]\b/g, class: 'chip-cf', label: 'Cod. Fiscale' },
-  'piva': { regex: /\b(?:IT)?\d{11}\b/g, class: 'chip-piva', label: 'Partita IVA' },
   'targa': { regex: /\b[A-Z]{2}\d{3}[A-Z]{2}\b|\b[A-Z]{2}\d{5}\b/g, class: 'chip-targa', label: 'Targa' },
-  'tel': { regex: /\b(?:\+39)?\s?3\d{2}[\s-]?\d{6,7}\b|\b(?:\+39)?\s?0\d{1,4}[\s-]?\d{5,7}\b/g, class: 'chip-tel', label: 'Telefono' },
+  'tel': { regex: /\b(?:\+39)?\s?3\d{2}[\s-]?\d{6,7}\b/g, class: 'chip-tel', label: 'Telefono' },
   'data': { regex: /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g, class: 'chip-data', label: 'Data' }
 };
 
 let customRules = {};
 
-const seedMaster = [{ title: "Fascicolo_Preliminare.txt", content: "Verifica contabile del 15/02/2026. Rilevato bonifico di € 450.000 su IBAN CH9300000000000000000 intestato a Mario Rossi (CF: RSSMRA80A01H501W). Contattare mario@azienda.com o il num +39 3331234567. Veicolo associato targa AB123CD." }];
-const seedDecoy = [{ title: "Nota_Spese.txt", content: "Scontrino cancelleria del 01/03/2026 per € 120,50. P.IVA 12345678901." }];
+const seedMaster = [
+  { title: "Intercettazione_01.txt", content: "Riunione del 15/02/2026. Accordato pagamento di € 450.000 su IBAN CH9300000000000000000. Referente: mario.boss@criminal.com." },
+  { title: "Verifica_Bancaria.txt", content: "Il bonifico di € 450.000 è stato eseguito il 20/02/2026. Targa sorvegliata nei pressi della banca: AB123CD." }
+];
+const seedDecoy = [{ title: "Fattura_01.txt", content: "Acquisto penne il 10/03/2026 per € 120,50." }];
 
+// --- CRITTOGRAFIA (SHA-256 OFFLINE) ---
 async function computeHash(text) {
   if (window.crypto && crypto.subtle) {
     try {
@@ -219,7 +231,7 @@ async function computeHash(text) {
 }
 
 function fallbackSHA256(ascii) {
-  function rightRotate(value, amount) { return (value>>>amount) | (value<<(32 - amount)); }
+  function rightRotate(v, a) { return (v>>>a) | (v<<(32 - a)); }
   let mathPow = Math.pow, maxWord = mathPow(2, 32), result = '', words = [];
   let asciiBitLength = ascii.length * 8;
   let hash = [1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225];
@@ -256,77 +268,61 @@ async function unlockVault() {
     state.mode = 'MASTER';
     document.getElementById('modeIndicator').innerText = "MASTER ENCLAVE";
     document.getElementById('modeIndicator').style.color = "var(--danger)";
-    document.getElementById('modeIndicator').style.borderColor = "rgba(255,59,92,0.3)";
     document.getElementById('lockScreen').style.display = 'none';
-    await logAction("BOOT_MASTER_ENCLAVE");
-    renderRulesList();
-    await loadSeed(seedMaster);
+    await logAction("BOOT_MASTER (RAM ONLY)");
+    renderRulesList(); await loadSeed(seedMaster);
   } else if (pin === '9999') {
     state.mode = 'DECOY';
     document.getElementById('modeIndicator').innerText = "SAFE DECOY";
     document.getElementById('lockScreen').style.display = 'none';
     await logAction("BOOT_DECOY");
-    renderRulesList();
-    await loadSeed(seedDecoy);
+    renderRulesList(); await loadSeed(seedDecoy);
   } else { alert("PIN Errato."); }
 }
 
 async function loadSeed(seedArray) {
   state.docs = [];
   for (const doc of seedArray) { await processDoc(doc.title, doc.content); }
-  renderDocs();
+  renderDocs(); renderTimeline();
 }
 
+// --- NER & REGOLE ---
 function addCustomRule() {
   const name = document.getElementById('ruleName').value.trim();
   const regexStr = document.getElementById('ruleRegex').value.trim();
-  if(!name || !regexStr) return alert("Inserisci nome e pattern validi.");
-  
+  if(!name || !regexStr) return;
   try {
     const regex = new RegExp(regexStr, 'g');
     const id = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
     customRules[id] = { regex: regex, class: 'chip-custom', label: name };
-    document.getElementById('ruleName').value = '';
-    document.getElementById('ruleRegex').value = '';
+    document.getElementById('ruleName').value = ''; document.getElementById('ruleRegex').value = '';
     renderRulesList();
-    
     state.docs.forEach(d => d.entities = extractEntities(d.content));
-    renderDocs();
+    renderDocs(); renderTimeline();
     if(document.getElementById('tab-graph').style.display === 'block') initGraph();
-    alert(`Regola "${name}" aggiunta con successo.`);
-  } catch(e) {
-    alert("Errore nella sintassi Regex: " + e.message);
-  }
+  } catch(e) { alert("Errore Regex: " + e.message); }
 }
 
 function removeRule(id) {
-  delete customRules[id];
-  renderRulesList();
+  delete customRules[id]; renderRulesList();
   state.docs.forEach(d => d.entities = extractEntities(d.content));
-  renderDocs();
+  renderDocs(); renderTimeline();
   if(document.getElementById('tab-graph').style.display === 'block') initGraph();
 }
 
 function renderRulesList() {
-  const container = document.getElementById('rulesList');
-  container.innerHTML = '';
+  const container = document.getElementById('rulesList'); container.innerHTML = '';
   Object.entries(customRules).forEach(([id, rule]) => {
-    container.innerHTML += `
-      <div style="display:flex; justify-content:space-between; align-items:center; background:#111; padding:12px; border-radius:8px; border:1px solid #222;">
+    container.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; background:#111; padding:12px; border-radius:8px; border:1px solid #222;">
         <div><strong style="color:#b388ff">${rule.label}</strong> <br><span style="font-size:11px; font-family:monospace; color:#666;">${rule.regex.toString()}</span></div>
         <button class="btn-danger" style="width:auto; padding:6px 12px; font-size:11px;" onclick="removeRule('${id}')">Elimina</button>
-      </div>
-    `;
+      </div>`;
   });
-  if(Object.keys(customRules).length === 0) {
-    container.innerHTML = `<div style="font-size:12px; color:#555; text-align:center; padding:10px;">Nessuna regola personalizzata aggiunta.</div>`;
-  }
 }
 
 function extractEntities(text) {
   let entities = [];
   const allRules = { ...coreRules, ...customRules };
-  
   for (let [key, rule] of Object.entries(allRules)) {
     const matches = text.match(rule.regex) || [];
     matches.forEach(val => entities.push({ id: key, type: rule.label, val: val.trim(), class: rule.class }));
@@ -334,21 +330,20 @@ function extractEntities(text) {
   return entities.filter((v,i,a)=>a.findIndex(t=>(t.type===v.type && t.val===v.val))===i);
 }
 
+// --- GESTIONE DOCUMENTI ---
+function cleanExtractedText(text) {
+  let clean = text.replace(/\b(?:obj|endobj|stream|endstream|xref|trailer|startxref|\%PDF-\d\.\d)\b/g, '');
+  clean = clean.replace(/\/[A-Za-z0-9#_]+\s/g, ' ');
+  clean = clean.replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, '').replace(/\s{2,}/g, ' ');
+  return clean.trim();
+}
+
 async function processDoc(title, content) {
   const cleanContent = cleanExtractedText(content);
   const entities = extractEntities(cleanContent);
   const hash = await computeHash(title + cleanContent);
   state.docs.unshift({ id: 'doc_'+Date.now()+'_'+Math.floor(Math.random()*1000), title, content: cleanContent, entities, hash: hash.substring(0,16) });
-  await logAction(`INDEX_DOC: ${title}`);
-}
-
-function cleanExtractedText(text) {
-  let clean = text;
-  clean = clean.replace(/\b(?:obj|endobj|stream|endstream|xref|trailer|startxref|\%PDF-\d\.\d)\b/g, '');
-  clean = clean.replace(/\/[A-Za-z0-9#_]+\s/g, ' ');
-  clean = clean.replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, '');
-  clean = clean.replace(/\s{2,}/g, ' ');
-  return clean.trim();
+  await logAction(`INDEX: ${title}`);
 }
 
 async function addDocument() {
@@ -356,172 +351,175 @@ async function addDocument() {
   const content = document.getElementById('docContent').value;
   if (!content) return;
   await processDoc(title, content);
-  document.getElementById('docTitle').value = '';
-  document.getElementById('docContent').value = '';
-  renderDocs();
+  document.getElementById('docTitle').value = ''; document.getElementById('docContent').value = '';
+  renderDocs(); renderTimeline();
   if(document.getElementById('tab-graph').style.display === 'block') initGraph();
+}
+
+function redactInput() {
+  let t = document.getElementById('docContent').value;
+  t = t.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "[EMAIL OSCURATA]");
+  t = t.replace(/\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/g, "[IBAN OSCURATO]");
+  t = t.replace(/(?:€|EUR)\s?\d+(?:[.,]\d+)?/gi, "[IMPORTO]");
+  document.getElementById('docContent').value = t;
 }
 
 async function handleFileUpload(event) {
   const files = event.target.files;
   if (!files || files.length === 0) return;
-  
-  const uploadBtn = document.getElementById('uploadBtn');
-  const ogHtml = uploadBtn.innerHTML;
-  uploadBtn.innerHTML = "⏳ ESTREZIONE DATI IN CORSO...";
-  uploadBtn.disabled = true;
-
-  let processati = 0;
+  const btn = document.getElementById('uploadBtn'); const og = btn.innerHTML;
+  btn.innerHTML = "⏳ ESTREZIONE..."; btn.disabled = true;
   for (let file of files) {
     try {
       let text = await extractTextFromFile(file);
       await processDoc(file.name, text);
-      processati++;
-    } catch(e) { console.error("File error:", e); }
+    } catch(e) { console.error(e); }
   }
-  
-  renderDocs();
+  renderDocs(); renderTimeline();
   if(document.getElementById('tab-graph').style.display === 'block') initGraph();
-  event.target.value = "";
-  uploadBtn.innerHTML = ogHtml;
-  uploadBtn.disabled = false;
-  setTimeout(() => alert(`${processati} file processati e classificati con successo.`), 100);
+  event.target.value = ""; btn.innerHTML = og; btn.disabled = false;
 }
 
 async function extractTextFromFile(file) {
   if (file.type === 'application/pdf' && window['pdfjs-dist/build/pdf']) {
-    return new Promise((resolve, reject) => {
+    return new Promise((res, rej) => {
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
           const pdf = await window['pdfjs-dist/build/pdf'].getDocument(new Uint8Array(e.target.result)).promise;
           let txt = "";
           for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const content = await page.getTextContent();
+            const page = await pdf.getPage(i); const content = await page.getTextContent();
             txt += content.items.map(item => item.str).join(' ') + "\n";
           }
-          resolve(txt);
-        } catch(err) { reject(err); }
+          res(txt);
+        } catch(err) { rej(err); }
       };
-      reader.onerror = reject;
       reader.readAsArrayBuffer(file);
     });
   } else {
-    return new Promise((resolve) => {
+    return new Promise((res) => {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const bytes = new Uint8Array(e.target.result);
-        let txt = ""; let str = "";
+        const bytes = new Uint8Array(e.target.result); let txt = "", str = "";
         for(let i=0; i<bytes.length; i++) {
           let c = bytes[i];
           if((c >= 32 && c <= 126) || c === 10) str += String.fromCharCode(c);
           else { if(str.length > 4) txt += str + " "; str = ""; }
         }
-        resolve(txt);
+        res(txt);
       };
       reader.readAsArrayBuffer(file);
     });
   }
 }
 
+// --- RENDER REPERTI & TIMELINE ---
 function toggleTextExpand(id) {
-  const el = document.getElementById(id);
-  const fade = el.querySelector('.text-box-fade');
-  if(el.classList.contains('expanded')) {
-    el.classList.remove('expanded');
-    if(fade) fade.style.display = 'flex';
-  } else {
-    el.classList.add('expanded');
-    if(fade) fade.style.display = 'none';
-  }
+  const el = document.getElementById(id); const fade = el.querySelector('.text-box-fade');
+  el.classList.toggle('expanded');
+  if(fade) fade.style.display = el.classList.contains('expanded') ? 'none' : 'flex';
 }
 
 function renderDocs() {
-  const query = document.getElementById('searchQuery').value.toLowerCase();
-  const list = document.getElementById('docsList');
-  list.innerHTML = '';
+  const q = document.getElementById('searchQuery').value.toLowerCase();
+  const list = document.getElementById('docsList'); list.innerHTML = '';
   
   state.docs.forEach((doc) => {
-    if(query && !doc.title.toLowerCase().includes(query) && !doc.content.toLowerCase().includes(query) && !doc.entities.some(e=>e.val.toLowerCase().includes(query))) return;
+    if(q && !doc.title.toLowerCase().includes(q) && !doc.content.toLowerCase().includes(q) && !doc.entities.some(e=>e.val.toLowerCase().includes(q))) return;
     
     const grouped = {};
-    doc.entities.forEach(e => {
-      if(!grouped[e.type]) grouped[e.type] = { class: e.class, items: [] };
-      grouped[e.type].items.push(e.val);
-    });
+    doc.entities.forEach(e => { if(!grouped[e.type]) grouped[e.type] = { class: e.class, items: [] }; grouped[e.type].items.push(e.val); });
     
-    let entitiesHtml = '';
+    let html = '';
     Object.entries(grouped).forEach(([type, data]) => {
-      entitiesHtml += `
-        <div class="entity-group">
-          <div class="entity-group-title">${type}</div>
-          <div class="entity-chips">
-            ${data.items.map(val => `<span class="chip ${data.class}">${val}</span>`).join('')}
-          </div>
-        </div>
-      `;
+      html += `<div class="entity-group"><div class="entity-group-title">${type}</div><div class="entity-chips">${data.items.map(val => `<span class="chip ${data.class}">${val}</span>`).join('')}</div></div>`;
     });
-    if(!entitiesHtml) entitiesHtml = `<div style="font-size:12px; color:#555;">Nessuna entità identificata.</div>`;
-
-    const txtId = `txt_${doc.id}`;
-    const needsFade = doc.content.length > 300;
     
+    const needsFade = doc.content.length > 300;
     list.innerHTML += `
       <div class="doc-record">
-        <div class="doc-header">
-          <div class="doc-title">📄 ${doc.title}</div>
-          <div class="doc-hash">H: ${doc.hash}</div>
-        </div>
+        <div class="doc-header"><div class="doc-title">📄 ${doc.title}</div><div class="doc-hash">H: ${doc.hash}</div></div>
         <div class="doc-body">
-          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
-            ${entitiesHtml}
-          </div>
-          
-          <div id="${txtId}" class="text-box" ${needsFade ? `onclick="toggleTextExpand('${txtId}')"` : ''}>
-            ${doc.content}
-            ${needsFade ? `<div class="text-box-fade">Tocca per espandere il testo completo</div>` : ''}
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">${html||'<span style="color:#555;font-size:12px;">Nessuna entità.</span>'}</div>
+          <div id="txt_${doc.id}" class="text-box" ${needsFade ? `onclick="toggleTextExpand('txt_${doc.id}')"` : ''}>
+            ${doc.content}${needsFade ? `<div class="text-box-fade">Espandi testo</div>` : ''}
           </div>
         </div>
       </div>
     `;
   });
-  if(list.innerHTML === '') {
-    list.innerHTML = `<div style="text-align:center; padding:20px; color:#555; font-size:13px;">Nessun reperto trovato.</div>`;
-  }
 }
 
-let graphNodes = [], graphEdges = [], animFrame = null, dragNode = null;
+function parseItalianDate(dateStr) {
+  // Converte "15/02/2026" o "15-02-2026" in timestamp per ordinamento
+  const parts = dateStr.split(/[\/\-]/);
+  if(parts.length === 3) return new Date(parts[2], parts[1]-1, parts[0]).getTime();
+  return 0;
+}
+
+function renderTimeline() {
+  const container = document.getElementById('timelineContainer'); container.innerHTML = '';
+  let events = [];
+  
+  state.docs.forEach(doc => {
+    doc.entities.filter(e => e.type === 'Data').forEach(e => {
+      events.push({ dateStr: e.val, ts: parseItalianDate(e.val), docTitle: doc.title, snippet: doc.content.substring(0, 100)+"..." });
+    });
+  });
+  
+  if(events.length === 0) { container.innerHTML = `<div style="color:#555; font-size:13px; text-align:center;">Nessuna data trovata nei reperti.</div>`; return; }
+  
+  events.sort((a,b) => a.ts - b.ts);
+  
+  // Rimuovi duplicati perfetti
+  events = events.filter((v,i,a)=>a.findIndex(t=>(t.dateStr===v.dateStr && t.docTitle===v.docTitle))===i);
+
+  events.forEach(ev => {
+    container.innerHTML += `
+      <div class="tl-item">
+        <div class="tl-dot"></div>
+        <div class="tl-date">${ev.dateStr}</div>
+        <div class="tl-content">
+          <strong style="color:#fff;">${ev.docTitle}</strong><br>
+          <span style="font-size:12px; color:#888;">${ev.snippet}</span>
+        </div>
+      </div>
+    `;
+  });
+}
+
+// --- GRAFO E FOCUS MODE ---
+let graphNodes = [], graphEdges = [], animFrame = null, dragNode = null, focusNode = null;
 function initGraph() {
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
-  graphNodes = []; graphEdges = [];
+  graphNodes = []; graphEdges = []; focusNode = null;
   let eMap = {};
   
   state.docs.forEach(doc => {
-    let nd = { id: doc.id, label: doc.title.substring(0,10)+"..", type: 'doc', x: Math.random()*250+50, y: Math.random()*250+50, vx:0, vy:0 };
+    let nd = { id: doc.id, label: doc.title.substring(0,10)+"..", type: 'doc', x: Math.random()*250+50, y: Math.random()*250+50, vx:0, vy:0, connected: [] };
     graphNodes.push(nd);
     
     doc.entities.forEach(ent => {
       let eId = 'e_' + ent.val;
       if(!eMap[eId]) {
-        let ne = { id: eId, label: ent.val, type: ent.type, class: ent.class, x: Math.random()*250+50, y: Math.random()*250+50, vx:0, vy:0 };
+        let ne = { id: eId, label: ent.val, type: ent.type, class: ent.class, x: Math.random()*250+50, y: Math.random()*250+50, vx:0, vy:0, connected: [] };
         graphNodes.push(ne); eMap[eId] = ne;
       }
       graphEdges.push({ source: nd, target: eMap[eId] });
+      nd.connected.push(eMap[eId]); eMap[eId].connected.push(nd);
     });
   });
   updateGraph();
 }
 
+function resetFocus() { focusNode = null; }
+
 function updateGraph() {
-  const cvs = document.getElementById('graphCanvas');
-  const ctx = cvs.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const rect = cvs.getBoundingClientRect();
-  
+  const cvs = document.getElementById('graphCanvas'); const ctx = cvs.getContext('2d');
+  const dpr = window.devicePixelRatio || 1; const rect = cvs.getBoundingClientRect();
   if(cvs.width !== rect.width * dpr) { cvs.width = rect.width * dpr; cvs.height = rect.height * dpr; }
-  ctx.save(); ctx.scale(dpr, dpr);
-  const w = rect.width, h = rect.height;
+  ctx.save(); ctx.scale(dpr, dpr); const w = rect.width, h = rect.height;
 
   graphNodes.forEach(n1 => {
     graphNodes.forEach(n2 => {
@@ -531,6 +529,7 @@ function updateGraph() {
     });
     n1.vx+=(w/2-n1.x)*0.003; n1.vy+=(h/2-n1.y)*0.003;
   });
+  
   graphEdges.forEach(e => {
     let dx=e.target.x-e.source.x, dy=e.target.y-e.source.y, dist=Math.sqrt(dx*dx+dy*dy)||1;
     let force=(dist-70)*0.05; e.source.vx+=(dx/dist)*force; e.source.vy+=(dy/dist)*force;
@@ -538,43 +537,66 @@ function updateGraph() {
   });
 
   ctx.clearRect(0,0,w,h);
+  
   graphNodes.forEach(n => {
     if(n!==dragNode) { n.x+=n.vx; n.y+=n.vy; if(n.x<15)n.x=15; if(n.x>w-15)n.x=w-15; if(n.y<15)n.y=15; if(n.y>h-15)n.y=h-15; }
     n.vx*=0.8; n.vy*=0.8;
   });
 
-  ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1.5;
-  graphEdges.forEach(e => { ctx.beginPath(); ctx.moveTo(e.source.x, e.source.y); ctx.lineTo(e.target.x, e.target.y); ctx.stroke(); });
+  // Disegno Archi (Opacità dinamica per Focus Mode)
+  ctx.lineWidth = 1.5;
+  graphEdges.forEach(e => {
+    let active = true;
+    if(focusNode && focusNode !== e.source && focusNode !== e.target) active = false;
+    ctx.strokeStyle = active ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.03)';
+    ctx.beginPath(); ctx.moveTo(e.source.x, e.source.y); ctx.lineTo(e.target.x, e.target.y); ctx.stroke();
+  });
 
+  // Disegno Nodi (Opacità dinamica per Focus Mode)
   graphNodes.forEach(n => {
+    let alpha = 1;
+    if(focusNode && focusNode !== n && !focusNode.connected.includes(n)) alpha = 0.15;
+    
+    ctx.globalAlpha = alpha;
     ctx.beginPath(); ctx.arc(n.x, n.y, n.type==='doc'?14:6, 0, Math.PI*2);
     if(n.type==='doc') ctx.fillStyle='#00e5ff';
     else if(n.class==='chip-email') ctx.fillStyle='#2196f3';
     else if(n.class==='chip-iban') ctx.fillStyle='#ffeb3b';
     else if(n.class==='chip-importo') ctx.fillStyle='#00e676';
     else if(n.class==='chip-cf') ctx.fillStyle='#e91e63';
-    else if(n.class==='chip-piva') ctx.fillStyle='#ff9800';
     else if(n.class==='chip-targa') ctx.fillStyle='#00bcd4';
     else if(n.class==='chip-tel') ctx.fillStyle='#9c27b0';
     else if(n.class==='chip-data') ctx.fillStyle='#795548';
     else ctx.fillStyle='#b388ff';
-    ctx.fill();
-    ctx.fillStyle='#fff'; ctx.font='10px sans-serif'; ctx.fillText(n.label, n.x+14, n.y+4);
+    
+    if(n === focusNode) { ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+    
+    ctx.fill(); ctx.fillStyle='#fff'; ctx.font='10px sans-serif'; ctx.fillText(n.label, n.x+14, n.y+4);
+    ctx.globalAlpha = 1;
   });
   ctx.restore(); animFrame = requestAnimationFrame(updateGraph);
 }
 
 const cvs = document.getElementById('graphCanvas');
 function getPtr(e) { const r = cvs.getBoundingClientRect(); return { x: (e.touches?e.touches[0].clientX:e.clientX)-r.left, y: (e.touches?e.touches[0].clientY:e.clientY)-r.top }; }
-cvs.addEventListener('mousedown', e=> dragNode = graphNodes.find(n=>Math.hypot(n.x-getPtr(e).x, n.y-getPtr(e).y)<25));
-cvs.addEventListener('touchstart', e=> dragNode = graphNodes.find(n=>Math.hypot(n.x-getPtr(e).x, n.y-getPtr(e).y)<25), {passive:true});
+
+// Gestione Touch/Click per Focus Mode e Dragging
+cvs.addEventListener('mousedown', e => { 
+  let n = graphNodes.find(n=>Math.hypot(n.x-getPtr(e).x, n.y-getPtr(e).y)<25);
+  if(n) { dragNode = n; focusNode = n; } else { focusNode = null; }
+});
+cvs.addEventListener('touchstart', e => {
+  let n = graphNodes.find(n=>Math.hypot(n.x-getPtr(e).x, n.y-getPtr(e).y)<25);
+  if(n) { dragNode = n; focusNode = n; } else { focusNode = null; }
+}, {passive:true});
 window.addEventListener('mousemove', e=> { if(dragNode) { dragNode.x=getPtr(e).x; dragNode.y=getPtr(e).y; dragNode.vx=0; dragNode.vy=0; }});
 window.addEventListener('touchmove', e=> { if(dragNode) { e.preventDefault(); dragNode.x=getPtr(e).x; dragNode.y=getPtr(e).y; }}, {passive:false});
 window.addEventListener('mouseup', ()=>dragNode=null); window.addEventListener('touchend', ()=>dragNode=null);
 
+// --- UTILITA GENERALI ---
 function switchTab(tId) {
-  ['docs','graph','rules','forensic'].forEach(t => document.getElementById('tab-'+t).style.display = t===tId?'block':'none');
-  document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', ['docs','graph','rules','forensic'][i]===tId));
+  ['docs','timeline','graph','rules','forensic'].forEach(t => document.getElementById('tab-'+t).style.display = t===tId?'block':'none');
+  document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', ['docs','timeline','graph','rules','forensic'][i]===tId));
   if(tId==='graph') initGraph(); else if(animFrame){ cancelAnimationFrame(animFrame); animFrame=null; }
 }
 
@@ -583,22 +605,22 @@ function renderAudit(errIdx = -1) {
     `<div style="${i===errIdx?'color:var(--danger)':''}"><span style="color:#666">[${b.time.slice(11,19)}]</span> <b>${b.action}</b><br><span style="color:${i===errIdx?'var(--danger)':'#666'}">H: ${b.hash}</span></div>`
   ).join('<hr style="border-color:#222; margin:6px 0;">');
 }
-function simulateTamper() { if(state.audit.length<2)return; let t=Math.floor(Math.random()*(state.audit.length-1))+1; state.audit[t]._raw+="HACK"; renderAudit(); alert("Blocco "+t+" alterato artificialmente."); }
+function simulateTamper() { if(state.audit.length<2)return; let t=Math.floor(Math.random()*(state.audit.length-1))+1; state.audit[t]._raw+="HACK"; renderAudit(); alert("Blocco alterato in RAM."); }
 async function verifyIntegrity() {
   for(let i=0; i<state.audit.length; i++) {
     if((await computeHash(state.audit[i]._raw)).substring(0,16) !== state.audit[i].hash || (i>0 && state.audit[i].prev !== state.audit[i-1].hash))
-      return alert("ALLARME: Manomissione rilevata al blocco "+i) || renderAudit(i);
+      return alert("ALLARME: Manomissione RAM al blocco "+i) || renderAudit(i);
   }
-  alert("✅ Verifica superata: Catena di custodia matematicamente integra.");
+  alert("✅ Verifica superata: Catena di custodia in RAM integra.");
 }
 async function exportHTMLBundle() {
   await logAction("EXPORT_FASCICOLO");
-  let h = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>VaultAI Report</title><style>body{font-family:sans-serif;padding:40px} .doc{border:1px solid #ccc;padding:20px;margin-bottom:20px;border-radius:8px} .t{font-size:12px;background:#eee;padding:2px 6px;border-radius:4px;margin:2px;display:inline-block}</style></head><body><h1>Report Forense (${Date.now()})</h1><hr>`;
+  let h = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>VaultAI Report</title><style>body{font-family:sans-serif;padding:40px;background:#fff;color:#000;} .doc{border:1px solid #ccc;padding:20px;margin-bottom:20px;border-radius:8px} .t{font-size:12px;background:#eee;padding:4px 8px;border-radius:4px;margin:2px;display:inline-block;border:1px solid #ddd;}</style></head><body><h1>Report Forense (${new Date().toLocaleString()})</h1><hr>`;
   state.docs.forEach(d => {
-    let tags = d.entities.map(e => `<span class="t">${e.type}: ${e.val}</span>`).join('');
-    h += `<div class="doc"><h3>${d.title}</h3><div>${tags}</div><p style="white-space:pre-wrap;font-size:14px;color:#333;">${d.content}</p><div style="font-family:monospace;font-size:11px;color:#888;">Hash: ${d.hash}</div></div>`;
+    let tags = d.entities.map(e => `<span class="t"><b>${e.type}:</b> ${e.val}</span>`).join('');
+    h += `<div class="doc"><h3>📄 ${d.title}</h3><div style="margin-bottom:12px;">${tags}</div><div style="white-space:pre-wrap;font-size:13px;color:#222;padding:12px;background:#f9f9f9;border:1px solid #eee;">${d.content}</div><div style="font-family:monospace;font-size:11px;color:#888;margin-top:12px;">SHA-256: ${d.hash}</div></div>`;
   });
-  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([h],{type:"text/html"})); a.download=`Report_${Date.now()}.html`; a.click();
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([h],{type:"text/html"})); a.download=`Report_Forense_${Date.now()}.html`; a.click();
 }
 </script>
 </body>
