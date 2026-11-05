@@ -118,7 +118,10 @@
     <div class="card" style="padding: 24px;">
       <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Inserisci la Master Password. Se è il primo accesso, la password inserita crittograferà il nuovo database locale.</p>
       <input type="password" id="pinInput" placeholder="Master Password" style="text-align:center; font-size:20px; letter-spacing:4px; padding:16px;" onkeypress="if(event.key==='Enter') unlockVault()">
+      
       <button class="btn-primary" onclick="unlockVault()" style="width: 100%; margin-top: 10px;">DECRIPTA VAULT</button>
+      
+      <button class="btn-secondary" onclick="factoryReset()" style="width: 100%; margin-top: 16px; font-size: 11px; color: var(--danger); border-color: rgba(255,59,92,0.3);">DISTRUGGI VAULT E RIPARTI</button>
     </div>
   </div>
 </div>
@@ -302,6 +305,18 @@ requestDB.onupgradeneeded = (e) => {
 };
 requestDB.onsuccess = (e) => { db = e.target.result; };
 
+// Factory Reset
+function factoryReset() {
+  if(confirm("⚠️ EMERGENZA: Vuoi distruggere il Vault locale e ripartire da zero? Tutti i dati non esportati andranno persi per sempre.")) {
+    const req = indexedDB.deleteDatabase("VaultAI_Forensic");
+    req.onsuccess = () => { 
+      alert("Vault locale distrutto con successo. Il sistema verrà riavviato."); 
+      location.reload(); 
+    };
+    req.onerror = () => { alert("Errore durante la formattazione."); };
+  }
+}
+
 // Auto-Lock su inattività (15 min)
 function resetInactivity() {
   clearTimeout(inactivityTimer);
@@ -375,7 +390,6 @@ async function saveEncryptedState() {
     const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, masterKey, new TextEncoder().encode(payload));
     
     const tx = db.transaction('secureVault', 'readwrite');
-    // Salvataggio atomico: garantisce l'integrità tra salt, iv e ciphertext
     tx.objectStore('secureVault').put({ 
       id: 'main', 
       salt: masterSalt, 
@@ -394,9 +408,27 @@ async function loadEncryptedState(password) {
     
     getReq.onsuccess = async (e) => {
       const record = e.target.result;
-      if(!record) return resolve(false); // Nessun DB (primo avvio)
+      if(!record) return resolve(false);
       
       try {
+        if (record.salt === undefined) {
+          const saltReq = tx.objectStore('secureVault').get('salt');
+          saltReq.onsuccess = async (ev) => {
+            const vecchiosalt = ev.target.result;
+            if(!vecchiosalt || !vecchiosalt.val) return reject("DB_CORROTTO");
+            try {
+              const s = new Uint8Array(vecchiosalt.val);
+              const key = await deriveKey(password, s);
+              const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(record.iv) }, key, new Uint8Array(record.data));
+              masterSalt = s;
+              masterKey = key;
+              saveEncryptedState(); 
+              resolve(JSON.parse(new TextDecoder().decode(decrypted)));
+            } catch(err) { reject("PASSWORD_ERRATA"); }
+          };
+          return;
+        }
+
         masterSalt = record.salt;
         const key = await deriveKey(password, masterSalt);
         const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: record.iv }, key, record.data);
@@ -423,7 +455,6 @@ async function unlockVault() {
       customRules = {};
       loaded.rules.forEach(r => { customRules[r.id] = { regex: new RegExp(r.r, 'g'), class:'c-custom', label:r.l }; });
     } else {
-      // Primo avvio: genera salt per la prima volta
       masterSalt = crypto.getRandomValues(new Uint8Array(16));
       masterKey = await deriveKey(pwd, masterSalt);
       await saveEncryptedState();
@@ -445,6 +476,8 @@ async function unlockVault() {
   } catch(e) {
     if (e === "DB_NOT_READY") {
       openModal("Attesa", "Il database locale si sta avviando, riprova tra un istante.");
+    } else if (e === "DB_CORROTTO") {
+      openModal("Errore Critico", "Il database è danneggiato. Usa il pulsante 'Distruggi Vault' per formattare.");
     } else {
       openModal("Accesso Negato", "Master Password errata o file corrotto.");
     }
@@ -935,7 +968,6 @@ async function exportVaultFile() {
   
   const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, masterKey, new TextEncoder().encode(payload));
   
-  // Il salt viene incorporato nel file in modo che il ricevente possa derivare la chiave dalla password.
   const vaultData = JSON.stringify({ 
     s: Array.from(masterSalt), 
     i: Array.from(iv), 
@@ -961,7 +993,6 @@ function importVaultFile(event) {
       openModal("Importa File Vault", "Inserisci la password associata a questo file .vault:", true, async (pwd) => {
         if(!pwd) return;
         try {
-          // Decripta con i parametri fisici del file importato
           const importedSalt = new Uint8Array(vault.s);
           const importedIv = new Uint8Array(vault.i);
           const importedCipher = new Uint8Array(vault.c);
@@ -974,7 +1005,6 @@ function importVaultFile(event) {
           customRules = {};
           payload.rules.forEach(r => { customRules[r.id] = { regex: new RegExp(r.r, 'g'), class:'c-custom', label:r.l }; });
           
-          // Re-salva usando il DB locale, la chiave locale e il salt locale del browser attuale
           await saveEncryptedState();
           
           renderWorkspaces(); renderRulesList(); renderAllViews();
@@ -983,7 +1013,7 @@ function importVaultFile(event) {
         } catch(err) { 
           openModal("Errore Crittografico", "Password errata o file compromesso."); 
         }
-      }, true); // true = campo input type password
+      }, true);
       
     } catch(err) { openModal("Errore", "File .vault danneggiato o non valido."); }
   };
