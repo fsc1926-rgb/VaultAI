@@ -129,7 +129,7 @@
     <h3 id="modalTitle" class="modal-title">Avviso</h3>
     <div id="modalMsg" class="modal-msg">Messaggio</div>
     <div id="modalInputContainer" style="display:none;">
-      <input type="text" id="modalInput" style="text-align:center;">
+      <input type="password" id="modalInput" style="text-align:center;">
     </div>
     <div class="btn-group" id="modalBtns">
       <button class="btn-primary" onclick="closeModal()">OK</button>
@@ -239,10 +239,10 @@
   <div id="tab-forensic" style="display:none;">
     <div class="card">
       <h3>🔒 Gestione Esportazione Progetto (AES-256-GCM)</h3>
-      <p style="font-size: 12px; color: var(--text-muted); margin-bottom:16px;">Tutti i dati sono salvati localmente in tempo reale e cifrati con la tua Master Password. Usa queste opzioni solo per trasferire l'indagine su un'altra macchina (File `.vault`).</p>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom:16px;">I dati sono salvati localmente in tempo reale e cifrati con la tua Master Password. Usa queste opzioni per esportare l'indagine (File `.vault`) per condividerla in sicurezza o fare un backup.</p>
       <div class="btn-group">
-        <button class="btn-primary" onclick="exportVaultFile()">Scarica File .vault</button>
-        <button class="btn-secondary" onclick="document.getElementById('vaultUpload').click()">Importa File .vault</button>
+        <button class="btn-primary" onclick="exportVaultFile()">Esporta Backup (.vault)</button>
+        <button class="btn-secondary" onclick="document.getElementById('vaultUpload').click()">Importa Backup (.vault)</button>
         <input type="file" id="vaultUpload" accept=".vault" style="display:none;" onchange="importVaultFile(event)">
       </div>
     </div>
@@ -268,9 +268,10 @@ if (window['pdfjs-dist/build/pdf']) {
   window['pdfjs-dist/build/pdf'].GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 }
 
-// --- GESTIONE STATO E DATABASE (IndexedDB) ---
+// --- GESTIONE STATO CRITTOGRAFICO E DATABASE (IndexedDB) ---
 let db;
-let masterKey = null; // CryptoKey AES-GCM
+let masterKey = null; 
+let masterSalt = null;
 let inactivityTimer;
 
 let state = { 
@@ -311,12 +312,20 @@ window.addEventListener('keypress', resetInactivity);
 
 // Sostituzione nativa Alert/Prompt
 let modalCallback = null;
-function openModal(title, msg, isPrompt = false, callback = null) {
+function openModal(title, msg, isPrompt = false, callback = null, isInputPassword = false) {
   document.getElementById('modalTitle').innerText = title;
   document.getElementById('modalMsg').innerText = msg;
-  document.getElementById('modalInputContainer').style.display = isPrompt ? 'block' : 'none';
+  const inputContainer = document.getElementById('modalInputContainer');
   const inp = document.getElementById('modalInput');
-  inp.value = '';
+  
+  if (isPrompt) {
+    inputContainer.style.display = 'block';
+    inp.type = isInputPassword ? 'password' : 'text';
+    inp.value = '';
+  } else {
+    inputContainer.style.display = 'none';
+  }
+  
   modalCallback = callback;
   
   let btns = `<button class="btn-primary" onclick="submitModal()">OK</button>`;
@@ -326,14 +335,18 @@ function openModal(title, msg, isPrompt = false, callback = null) {
   document.getElementById('customModalOverlay').style.display = 'flex';
   if(isPrompt) setTimeout(()=>inp.focus(), 50);
 }
-function closeModal() { document.getElementById('customModalOverlay').style.display = 'none'; modalCallback = null; }
+
+function closeModal() { 
+  document.getElementById('customModalOverlay').style.display = 'none'; 
+  modalCallback = null; 
+}
 function submitModal() {
   const val = document.getElementById('modalInput').value;
   closeModal();
   if(modalCallback) modalCallback(val);
 }
 
-// --- CRITTOGRAFIA ---
+// --- CRITTOGRAFIA E PERSISTENZA ATOMICA ---
 function fallbackSHA256(str) { return Array.from(new TextEncoder().encode(str)).reduce((acc, val) => acc + val.toString(16), "").substring(0,64); }
 async function computeHash(text) {
   if (window.crypto && crypto.subtle) {
@@ -355,44 +368,52 @@ async function deriveKey(password, salt) {
 }
 
 async function saveEncryptedState() {
-  if(!masterKey || !db) return;
+  if(!masterKey || !db || !masterSalt) return;
   try {
     const payload = JSON.stringify({ state, rules: Object.keys(customRules).map(k=>({id:k, r:customRules[k].regex.source, l:customRules[k].label})) });
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, masterKey, new TextEncoder().encode(payload));
     
     const tx = db.transaction('secureVault', 'readwrite');
-    tx.objectStore('secureVault').put({ id: 'main', iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) });
+    // Salvataggio atomico: garantisce l'integrità tra salt, iv e ciphertext
+    tx.objectStore('secureVault').put({ 
+      id: 'main', 
+      salt: masterSalt, 
+      iv: iv, 
+      data: encrypted 
+    });
   } catch(e) { console.error("Save Error:", e); }
 }
 
 async function loadEncryptedState(password) {
   return new Promise((resolve, reject) => {
+    if (!db) return reject("DB_NOT_READY");
+    
     const tx = db.transaction('secureVault', 'readonly');
     const getReq = tx.objectStore('secureVault').get('main');
+    
     getReq.onsuccess = async (e) => {
       const record = e.target.result;
-      if(!record) return resolve(false); // Nessun DB
+      if(!record) return resolve(false); // Nessun DB (primo avvio)
+      
       try {
-        const saltReq = tx.objectStore('secureVault').get('salt'); // Recuperiamo il salt
-        saltReq.onsuccess = async (ev) => {
-          const salt = ev.target.result ? new Uint8Array(ev.target.result.val) : new Uint8Array(16);
-          const key = await deriveKey(password, salt);
-          try {
-            const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(record.iv) }, key, new Uint8Array(record.data));
-            const payload = JSON.parse(new TextDecoder().decode(decrypted));
-            masterKey = key;
-            resolve(payload);
-          } catch(err) { reject("Password errata."); }
-        };
-      } catch(err) { reject(err); }
+        masterSalt = record.salt;
+        const key = await deriveKey(password, masterSalt);
+        const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: record.iv }, key, record.data);
+        const payload = JSON.parse(new TextDecoder().decode(decrypted));
+        masterKey = key;
+        resolve(payload);
+      } catch(err) { 
+        reject("PASSWORD_ERRATA"); 
+      }
     };
+    getReq.onerror = () => reject("ERRORE_LETTURA_DB");
   });
 }
 
 // --- BOOT E LOGGING ---
 async function unlockVault() {
-  const pwd = document.getElementById('pinInput').value;
+  const pwd = document.getElementById('pinInput').value.trim();
   if (!pwd) return openModal("Errore", "Inserisci una password.");
   
   try {
@@ -402,11 +423,9 @@ async function unlockVault() {
       customRules = {};
       loaded.rules.forEach(r => { customRules[r.id] = { regex: new RegExp(r.r, 'g'), class:'c-custom', label:r.l }; });
     } else {
-      // Primo avvio
-      const salt = crypto.getRandomValues(new Uint8Array(16));
-      masterKey = await deriveKey(pwd, salt);
-      const tx = db.transaction('secureVault', 'readwrite');
-      tx.objectStore('secureVault').put({ id: 'salt', val: Array.from(salt) });
+      // Primo avvio: genera salt per la prima volta
+      masterSalt = crypto.getRandomValues(new Uint8Array(16));
+      masterKey = await deriveKey(pwd, masterSalt);
       await saveEncryptedState();
     }
     
@@ -424,12 +443,19 @@ async function unlockVault() {
     resetInactivity();
     
   } catch(e) {
-    openModal("Accesso Negato", "Master Password errata o file corrotto.");
+    if (e === "DB_NOT_READY") {
+      openModal("Attesa", "Il database locale si sta avviando, riprova tra un istante.");
+    } else {
+      openModal("Accesso Negato", "Master Password errata o file corrotto.");
+    }
   }
 }
 
 function lockSystem() {
-  masterKey = null; state = { workspaces: ['Indagine_Principale'], currentWorkspace: 'Indagine_Principale', docs: [], audit: [] }; customRules = {};
+  masterKey = null; 
+  masterSalt = null;
+  state = { workspaces: ['Indagine_Principale'], currentWorkspace: 'Indagine_Principale', docs: [], audit: [] }; 
+  customRules = {};
   document.getElementById('lockScreen').style.display = 'flex';
   document.getElementById('workspaceSelectorContainer').style.display = 'none';
   document.getElementById('mainTabs').style.display = 'none';
@@ -447,7 +473,7 @@ async function logAction(actionName) {
   saveEncryptedState();
 }
 
-// --- SANITIZZAZIONE E HIGHLIGHTING (DOM Purify minimal) ---
+// --- SANITIZZAZIONE E HIGHLIGHTING ---
 function escapeHTML(str) {
   if (!str) return "";
   return str.toString().replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag]));
@@ -455,18 +481,14 @@ function escapeHTML(str) {
 
 function highlightEntities(text, entities) {
   let escaped = escapeHTML(text);
-  // Sort entities by length descending to prevent partial replacements overlapping
   const sorted = [...entities].sort((a,b) => b.val.length - a.val.length);
-  // Create a safe map for replacement
   const map = {};
   sorted.forEach((e, i) => {
     const key = `__MARKER_${i}__`;
     map[key] = `<mark class="${e.class}">${escapeHTML(e.val)}</mark>`;
-    // Escape string for Regex
     const safeVal = escapeHTML(e.val).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     escaped = escaped.replace(new RegExp(safeVal, 'g'), key);
   });
-  // Re-inject HTML
   Object.keys(map).forEach(key => { escaped = escaped.split(key).join(map[key]); });
   return escaped;
 }
@@ -504,7 +526,6 @@ function addCustomRule() {
     customRules[id] = { regex: regex, class: 'c-custom', label: name };
     document.getElementById('ruleName').value = ''; document.getElementById('ruleRegex').value = '';
     
-    // Ricalcola
     state.docs.forEach(d => d.entities = extractEntities(d.content));
     saveEncryptedState();
     renderRulesList(); renderAllViews();
@@ -725,7 +746,7 @@ function renderStats() {
   container.innerHTML = html;
 }
 
-// --- GRAFO (OTTIMIZZATO CON PAN, ZOOM E COOLING) ---
+// --- GRAFO (OTTIMIZZATO) ---
 let graphNodes = [], graphEdges = [], animFrame = null, dragNode = null, focusNode = null;
 let viewTransform = { x: 0, y: 0, k: 1 };
 let isDraggingBackground = false;
@@ -759,7 +780,7 @@ function zoomGraph(factor) {
   viewTransform.x = cx - (cx - viewTransform.x) * factor;
   viewTransform.y = cy - (cy - viewTransform.y) * factor;
   viewTransform.k *= factor;
-  updateGraph(true); // Forza un frame
+  updateGraph(true);
 }
 function resetGraphView() { viewTransform = {x:0, y:0, k:1}; focusNode=null; updateGraph(true); }
 
@@ -770,14 +791,13 @@ function updateGraph(forceRender = false) {
   
   let kineticEnergy = 0;
 
-  // Calcolo Forze
   graphNodes.forEach(n1 => {
     graphNodes.forEach(n2 => {
       if(n1===n2) return;
       let dx=n2.x-n1.x, dy=n2.y-n1.y, dist=Math.sqrt(dx*dx+dy*dy)||1;
       if(dist<200) { let force=-400/(dist*dist); n1.vx+=(dx/dist)*force; n1.vy+=(dy/dist)*force; }
     });
-    n1.vx+=(400-n1.x)*0.001; n1.vy+=(400-n1.y)*0.001; // Gravità verso centro logico
+    n1.vx+=(400-n1.x)*0.001; n1.vy+=(400-n1.y)*0.001;
   });
   
   graphEdges.forEach(e => {
@@ -786,14 +806,12 @@ function updateGraph(forceRender = false) {
     e.target.vx-=(dx/dist)*force; e.target.vy-=(dy/dist)*force;
   });
 
-  // Applica Forze
   graphNodes.forEach(n => {
     if(n!==dragNode) { n.x+=n.vx; n.y+=n.vy; }
     n.vx*=0.85; n.vy*=0.85;
     kineticEnergy += Math.abs(n.vx) + Math.abs(n.vy);
   });
 
-  // Render
   ctx.save();
   ctx.clearRect(0,0, cvs.width, cvs.height);
   ctx.translate(viewTransform.x, viewTransform.y);
@@ -833,7 +851,6 @@ function updateGraph(forceRender = false) {
   });
   ctx.restore();
 
-  // Kinetic Cooling: se l'energia è bassa e non c'è drag, ferma l'animazione per risparmiare risorse
   if(kineticEnergy > 1.5 || dragNode || isDraggingBackground || forceRender) {
     animFrame = requestAnimationFrame(() => updateGraph());
   } else {
@@ -841,7 +858,6 @@ function updateGraph(forceRender = false) {
   }
 }
 
-// Eventi Canvas
 const cvs = document.getElementById('graphCanvas');
 function getPtrLogico(e) {
   const r = cvs.getBoundingClientRect();
@@ -913,15 +929,22 @@ function exportCSV() {
 }
 
 async function exportVaultFile() {
-  if(!masterKey) return;
+  if(!masterKey || !masterSalt) return;
   const payload = JSON.stringify({ state: state, rules: Object.keys(customRules).map(k=>({id:k, r:customRules[k].regex.source, l:customRules[k].label})) });
   const iv = crypto.getRandomValues(new Uint8Array(12));
+  
   const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, masterKey, new TextEncoder().encode(payload));
   
-  const vaultData = JSON.stringify({ i: Array.from(iv), c: Array.from(new Uint8Array(encrypted)) });
+  // Il salt viene incorporato nel file in modo che il ricevente possa derivare la chiave dalla password.
+  const vaultData = JSON.stringify({ 
+    s: Array.from(masterSalt), 
+    i: Array.from(iv), 
+    c: Array.from(new Uint8Array(encrypted)) 
+  });
+  
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([vaultData], {type:"application/json"}));
-  a.download = `Backup_${state.currentWorkspace}_${Date.now()}.vault`;
+  a.download = `Backup_Forense_${state.currentWorkspace}_${Date.now()}.vault`;
   a.click();
   logAction("VAULT_FILE_EXPORTED");
 }
@@ -930,21 +953,39 @@ function importVaultFile(event) {
   const file = event.target.files[0];
   if(!file) return;
   const reader = new FileReader();
+  
   reader.onload = async (e) => {
     try {
       const vault = JSON.parse(e.target.result);
-      if(!masterKey) throw new Error("Sistema bloccato");
-      const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(vault.i) }, masterKey, new Uint8Array(vault.c));
-      const payload = JSON.parse(new TextDecoder().decode(decrypted));
       
-      state = payload.state; customRules = {};
-      payload.rules.forEach(r => { customRules[r.id] = { regex: new RegExp(r.r, 'g'), class:'c-custom', label:r.l }; });
+      openModal("Importa File Vault", "Inserisci la password associata a questo file .vault:", true, async (pwd) => {
+        if(!pwd) return;
+        try {
+          // Decripta con i parametri fisici del file importato
+          const importedSalt = new Uint8Array(vault.s);
+          const importedIv = new Uint8Array(vault.i);
+          const importedCipher = new Uint8Array(vault.c);
+          
+          const importKey = await deriveKey(pwd, importedSalt);
+          const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: importedIv }, importKey, importedCipher);
+          const payload = JSON.parse(new TextDecoder().decode(decrypted));
+          
+          state = payload.state; 
+          customRules = {};
+          payload.rules.forEach(r => { customRules[r.id] = { regex: new RegExp(r.r, 'g'), class:'c-custom', label:r.l }; });
+          
+          // Re-salva usando il DB locale, la chiave locale e il salt locale del browser attuale
+          await saveEncryptedState();
+          
+          renderWorkspaces(); renderRulesList(); renderAllViews();
+          logAction("VAULT_FILE_RESTORED");
+          openModal("Successo", "File decriptato e importato con successo nel database locale.");
+        } catch(err) { 
+          openModal("Errore Crittografico", "Password errata o file compromesso."); 
+        }
+      }, true); // true = campo input type password
       
-      saveEncryptedState();
-      renderWorkspaces(); renderRulesList(); renderAllViews();
-      logAction("VAULT_FILE_RESTORED");
-      openModal("Successo", "Progetto ripristinato correttamente.");
-    } catch(err) { openModal("Errore", "Impossibile decriptare. File corrotto o Master Password attuale diversa da quella del file."); }
+    } catch(err) { openModal("Errore", "File .vault danneggiato o non valido."); }
   };
   reader.readAsText(file);
   event.target.value = "";
