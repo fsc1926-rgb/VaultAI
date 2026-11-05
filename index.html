@@ -6,7 +6,6 @@
 <meta name="theme-color" content="#000000">
 <title>VaultAI - Enterprise Forensic Enclave</title>
 
-<!-- PDF.js via CDN (Caricato 1 sola volta in cache) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
 <style>
@@ -17,18 +16,18 @@
     --danger: #ff3b5c; --success: #00e676; --warning: #ffb300;
     --border: #222222; --border-light: #333333;
   }
-  * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+  * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
   body { margin: 0; background: var(--bg); color: var(--text); overflow-x: hidden; padding-bottom: 60px; }
   
   header { background: rgba(17,17,17,0.85); backdrop-filter: blur(10px); padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
   .badge { background: var(--accent-dim); color: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; border: 1px solid rgba(0,229,255,0.3); }
   
-  .container { padding: 16px; max-width: 1000px; margin: auto; }
-  .card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); transition: 0.2s ease; }
+  .container { padding: 16px; max-width: 1200px; margin: auto; }
+  .card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); transition: 0.2s ease; position: relative; }
   h2, h3 { margin: 0 0 12px 0; color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; gap: 8px; }
   
   input[type="text"], input[type="password"], textarea, select { width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--border-light); background: #080808; color: #fff; font-size: 14px; transition: 0.2s; }
-  textarea { resize: vertical; min-height: 100px; font-family: inherit; }
+  textarea { resize: vertical; min-height: 100px; line-height: 1.5; }
   input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,229,255,0.1); }
   
   .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -61,30 +60,52 @@
   .doc-hash { font-family: 'Courier New', monospace; font-size: 11px; color: var(--text-muted); }
   .doc-body { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
   
-  .entity-group { background: #111; border: 1px solid #222; border-radius: 8px; padding: 12px; }
-  .entity-group-title { font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 1px; }
   .entity-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-  
   .chip { padding: 4px 10px; border-radius: 6px; font-size: 12px; background: #1a1a1a; border: 1px solid #333; display: inline-flex; align-items: center; font-weight: 500; }
-  .chip-email { color: #2196f3; border-color: rgba(33,150,243,0.3); background: rgba(33,150,243,0.05); }
-  .chip-iban { color: #ffeb3b; border-color: rgba(255,235,59,0.3); background: rgba(255,235,59,0.05); }
-  .chip-importo { color: #00e676; border-color: rgba(0,230,118,0.3); background: rgba(0,230,118,0.05); }
-  .chip-cf { color: #e91e63; border-color: rgba(233,30,99,0.3); background: rgba(233,30,99,0.05); }
-  .chip-targa { color: #00bcd4; border-color: rgba(0,188,212,0.3); background: rgba(0,188,212,0.05); }
-  .chip-tel { color: #9c27b0; border-color: rgba(156,39,176,0.3); background: rgba(156,39,176,0.05); }
-  .chip-data { color: #795548; border-color: rgba(121,85,72,0.3); background: rgba(121,85,72,0.05); }
-  .chip-custom { color: #b388ff; border-color: rgba(179,136,255,0.3); background: rgba(179,136,255,0.05); }
   
-  .text-box { background: #050505; border: 1px solid #1a1a1a; padding: 12px; border-radius: 8px; font-size: 13px; line-height: 1.6; color: #ccc; max-height: 120px; overflow: hidden; position: relative; white-space: pre-wrap; word-break: break-word; }
-  .text-box.expanded { max-height: none; }
-  .text-box-fade { position: absolute; bottom: 0; left: 0; right: 0; height: 40px; background: linear-gradient(transparent, #050505); cursor: pointer; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 4px; font-size: 11px; color: var(--accent); font-weight: bold; }
+  /* Colori Categorie */
+  .c-email { color: #2196f3; border-color: rgba(33,150,243,0.3); background: rgba(33,150,243,0.05); }
+  .c-iban { color: #ffeb3b; border-color: rgba(255,235,59,0.3); background: rgba(255,235,59,0.05); }
+  .c-importo { color: #00e676; border-color: rgba(0,230,118,0.3); background: rgba(0,230,118,0.05); }
+  .c-cf { color: #e91e63; border-color: rgba(233,30,99,0.3); background: rgba(233,30,99,0.05); }
+  .c-targa { color: #00bcd4; border-color: rgba(0,188,212,0.3); background: rgba(0,188,212,0.05); }
+  .c-tel { color: #9c27b0; border-color: rgba(156,39,176,0.3); background: rgba(156,39,176,0.05); }
+  .c-data { color: #795548; border-color: rgba(121,85,72,0.3); background: rgba(121,85,72,0.05); }
+  .c-custom { color: #b388ff; border-color: rgba(179,136,255,0.3); background: rgba(179,136,255,0.05); }
+  
+  /* Text Marker Highlighting */
+  mark { background: transparent; padding: 0 4px; border-radius: 4px; border: 1px solid transparent; }
+  mark.c-email { background: rgba(33,150,243,0.2); color: #64b5f6; border-color: rgba(33,150,243,0.4); }
+  mark.c-iban { background: rgba(255,235,59,0.2); color: #fff59d; border-color: rgba(255,235,59,0.4); }
+  mark.c-importo { background: rgba(0,230,118,0.2); color: #69f0ae; border-color: rgba(0,230,118,0.4); }
+  mark.c-cf { background: rgba(233,30,99,0.2); color: #f06292; border-color: rgba(233,30,99,0.4); }
+  mark.c-targa { background: rgba(0,188,212,0.2); color: #4dd0e1; border-color: rgba(0,188,212,0.4); }
+  mark.c-tel { background: rgba(156,39,176,0.2); color: #ba68c8; border-color: rgba(156,39,176,0.4); }
+  mark.c-data { background: rgba(121,85,72,0.3); color: #a1887f; border-color: rgba(121,85,72,0.5); }
+  mark.c-custom { background: rgba(179,136,255,0.2); color: #d1c4e9; border-color: rgba(179,136,255,0.4); }
+
+  .text-box { background: #050505; border: 1px solid #1a1a1a; padding: 14px; border-radius: 8px; font-size: 14px; line-height: 1.7; color: #ccc; max-height: 150px; overflow: hidden; position: relative; white-space: pre-wrap; word-break: break-word; transition: max-height 0.3s ease; }
+  .text-box.expanded { max-height: 5000px; }
+  .text-box-fade { position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: linear-gradient(transparent, #050505 80%); cursor: pointer; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 8px; font-size: 11px; color: var(--accent); font-weight: bold; }
   
   .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #0a0a0a; border: 1px solid #1a1a1a; margin-bottom: 6px; border-radius: 6px; }
   
   .audit-log { font-family: 'Courier New', monospace; font-size: 12px; background: #050505; padding: 16px; border-radius: 8px; border: 1px solid #1a1a1a; max-height: 300px; overflow-y: auto; }
-  canvas { width: 100%; height: 450px; background: #050505; border-radius: 12px; border: 1px solid var(--border-light); touch-action: none; cursor: crosshair; }
+  
+  /* Canvas Container */
+  .canvas-wrapper { position: relative; width: 100%; height: 500px; background: #050505; border-radius: 12px; border: 1px solid var(--border-light); overflow: hidden; }
+  canvas { width: 100%; height: 100%; touch-action: none; cursor: grab; display: block; }
+  canvas:active { cursor: grabbing; }
+  .graph-controls { position: absolute; bottom: 16px; right: 16px; display: flex; gap: 8px; z-index: 10; }
+  .graph-btn { background: rgba(17,17,17,0.8); border: 1px solid var(--border-light); color: var(--text); padding: 8px; border-radius: 6px; cursor: pointer; font-size: 16px; min-width: 36px; display: flex; justify-content: center; align-items: center; }
   
   #lockScreen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; z-index: 9999; }
+  
+  /* Custom Modal */
+  #customModalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 10000; }
+  .modal-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 100%; max-width: 400px; text-align: center; }
+  .modal-title { color: var(--accent); margin-top: 0; font-size: 16px; }
+  .modal-msg { font-size: 14px; margin-bottom: 20px; color: var(--text); line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -95,8 +116,23 @@
     <h1 style="color:var(--accent); font-size: 36px; margin: 0 0 5px 0; letter-spacing: 2px;">VaultAI</h1>
     <p style="color:var(--success); font-size: 11px; margin-bottom: 30px; letter-spacing: 1px; font-weight:bold;">ENTERPRISE FORENSIC EDITION</p>
     <div class="card" style="padding: 24px;">
-      <input type="password" id="pinInput" placeholder="PIN" style="text-align:center; font-size:28px; letter-spacing:12px; padding:16px;">
-      <button class="btn-primary" onclick="unlockVault()" style="width: 100%; margin-top: 10px;">ACCEDI AL VAULT</button>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Inserisci la Master Password. Se è il primo accesso, la password inserita crittograferà il nuovo database locale.</p>
+      <input type="password" id="pinInput" placeholder="Master Password" style="text-align:center; font-size:20px; letter-spacing:4px; padding:16px;" onkeypress="if(event.key==='Enter') unlockVault()">
+      <button class="btn-primary" onclick="unlockVault()" style="width: 100%; margin-top: 10px;">DECRIPTA VAULT</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL OVERLAY -->
+<div id="customModalOverlay">
+  <div class="modal-box">
+    <h3 id="modalTitle" class="modal-title">Avviso</h3>
+    <div id="modalMsg" class="modal-msg">Messaggio</div>
+    <div id="modalInputContainer" style="display:none;">
+      <input type="text" id="modalInput" style="text-align:center;">
+    </div>
+    <div class="btn-group" id="modalBtns">
+      <button class="btn-primary" onclick="closeModal()">OK</button>
     </div>
   </div>
 </div>
@@ -104,25 +140,24 @@
 <header>
   <div style="font-weight: 800; font-size: 18px; letter-spacing: 1px;">VaultAI</div>
   <div id="modeIndicator" class="badge">LOCKED</div>
-  <button class="btn-secondary" style="width:auto; padding:6px 16px; margin:0; border-radius: 20px; font-size: 11px;" onclick="location.reload()">DISTRUGGI RAM</button>
+  <button class="btn-secondary" style="width:auto; padding:6px 16px; margin:0; border-radius: 20px; font-size: 11px;" onclick="lockSystem()">BLOCCA SISTEMA</button>
 </header>
 
 <div class="container">
-  
   <!-- WORKSPACE SELECTOR -->
   <div class="workspace-selector" id="workspaceSelectorContainer" style="display:none;">
     <span style="font-size:13px; font-weight:bold; color:var(--accent);">📁 FASCICOLO:</span>
     <select id="workspaceSelect" onchange="changeWorkspace()"></select>
-    <button class="btn-secondary" style="min-width:auto; padding:12px;" onclick="newWorkspace()">+ NUOVO</button>
+    <button class="btn-secondary" style="min-width:auto; padding:12px;" onclick="promptNewWorkspace()">+ NUOVO</button>
   </div>
 
   <div class="tabs" id="mainTabs" style="display:none;">
     <div class="tab active" onclick="switchTab('docs')">📄 Reperti</div>
     <div class="tab" onclick="switchTab('timeline')">⏱️ Timeline</div>
-    <div class="tab" onclick="switchTab('graph')">🕸️ Grafo</div>
+    <div class="tab" onclick="switchTab('graph')">🕸️ Grafo Relazioni</div>
     <div class="tab" onclick="switchTab('stats')">📊 Statistiche</div>
     <div class="tab" onclick="switchTab('rules')">⚙️ Regole NER</div>
-    <div class="tab" onclick="switchTab('forensic')">⛓️ Sicurezza & Export</div>
+    <div class="tab" onclick="switchTab('forensic')">⛓️ Sicurezza & Audit</div>
   </div>
 
   <!-- TAB 1: REPERTI -->
@@ -133,17 +168,17 @@
       <button class="btn-upload" id="uploadBtn" onclick="document.getElementById('fileUpload').click()">
         <span style="font-size:24px; margin-bottom:4px;">📥</span> Carica File (PDF, TXT, CSV)
       </button>
-      <div style="text-align: center; margin: 16px 0; color: #444; font-size: 12px;">OPPURE INSERIMENTO MANUALE</div>
+      <div style="text-align: center; margin: 16px 0; color: #444; font-size: 12px; font-weight: bold;">OPPURE INSERIMENTO MANUALE</div>
       <input type="text" id="docTitle" placeholder="Titolo Reperto (Es. Intercettazione_A)">
-      <textarea id="docContent" placeholder="Incolla testo da analizzare..."></textarea>
+      <textarea id="docContent" placeholder="Incolla testo da analizzare. Le entità verranno evidenziate automaticamente..."></textarea>
       <div class="btn-group">
         <button class="btn-primary" onclick="addDocument()">Indicizza nel Fascicolo</button>
-        <button class="btn-secondary" onclick="redactInput()">Oscura Dati</button>
+        <button class="btn-secondary" onclick="redactInput()">Oscura Dati Sensibili</button>
       </div>
     </div>
     <div class="card">
       <h3>🔍 Reperti nel Fascicolo Corrente</h3>
-      <input type="text" id="searchQuery" placeholder="Cerca qualsiasi parola, IBAN o entità..." oninput="renderDocs()">
+      <input type="text" id="searchQuery" placeholder="Cerca qualsiasi parola, entità o hash..." oninput="renderDocs()">
       <div id="docsList" style="margin-top:20px;"></div>
     </div>
   </div>
@@ -151,8 +186,8 @@
   <!-- TAB 2: TIMELINE -->
   <div id="tab-timeline" style="display:none;">
     <div class="card">
-      <h3>⏱️ Cronologia Eventi</h3>
-      <p style="font-size: 12px; color: var(--text-muted);">Estrazione temporale generata automaticamente dai reperti di questo fascicolo.</p>
+      <h3>⏱️ Cronologia Eventi Estrapolata</h3>
+      <p style="font-size: 12px; color: var(--text-muted);">Estrazione temporale generata automaticamente dai reperti analizzati.</p>
       <div id="timelineContainer" class="timeline"></div>
     </div>
   </div>
@@ -161,18 +196,28 @@
   <div id="tab-graph" style="display:none;">
     <div class="card" style="padding: 10px;">
       <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 10px 10px 10px;">
-        <h3 style="margin:0;">🕸️ Grafo Relazioni</h3>
-        <button class="btn-secondary" style="width:auto; padding:4px 10px; font-size:11px;" onclick="resetFocus()">Reset Focus</button>
+        <h3 style="margin:0;">🕸️ Grafo Interattivo (Pan & Zoom)</h3>
+        <button class="btn-secondary" style="width:auto; padding:4px 10px; font-size:11px;" onclick="initGraph()">Ricalcola Layout</button>
       </div>
-      <canvas id="graphCanvas"></canvas>
+      <div class="canvas-wrapper">
+        <canvas id="graphCanvas"></canvas>
+        <div class="graph-controls">
+          <button class="graph-btn" onclick="zoomGraph(1.2)">➕</button>
+          <button class="graph-btn" onclick="zoomGraph(0.8)">➖</button>
+          <button class="graph-btn" onclick="resetGraphView()">🏠</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- TAB 4: STATISTICHE (NUOVO) -->
+  <!-- TAB 4: STATISTICHE -->
   <div id="tab-stats" style="display:none;">
     <div class="card">
-      <h3>📊 Analisi Frequenze Entità</h3>
-      <p style="font-size: 12px; color: var(--text-muted);">Classifica delle entità più ricorrenti per individuare i nodi cruciali dell'indagine.</p>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0;">📊 Analisi Frequenze</h3>
+        <button class="btn-secondary" style="width:auto; padding:4px 10px; font-size:11px;" onclick="exportCSV()">Esporta CSV</button>
+      </div>
+      <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">Classifica delle entità più ricorrenti per individuare i nodi cruciali dell'indagine.</p>
       <div id="statsContainer" style="margin-top: 16px;"></div>
     </div>
   </div>
@@ -180,51 +225,55 @@
   <!-- TAB 5: REGOLE NER -->
   <div id="tab-rules" style="display:none;">
     <div class="card">
-      <h3>⚙️ Regole Personalizzate</h3>
+      <h3>⚙️ Regole di Estrazione Personalizzate (Regex)</h3>
       <div style="background: #0a0a0a; padding: 16px; border-radius: 8px; border: 1px solid var(--border-light); margin-bottom: 20px;">
-        <input type="text" id="ruleName" placeholder="Nome (es. Cripto Wallet)">
-        <input type="text" id="ruleRegex" placeholder="Regex (es. ^1[a-km-zA-HJ-NP-Z1-9]{25,34}$)">
-        <button class="btn-primary" onclick="addCustomRule()">Aggiungi ed Estrai</button>
+        <input type="text" id="ruleName" placeholder="Nome Categoria (es. Cripto Wallet)">
+        <input type="text" id="ruleRegex" placeholder="Espressione Regolare (es. ^1[a-km-zA-HJ-NP-Z1-9]{25,34}$)">
+        <button class="btn-primary" onclick="addCustomRule()">Aggiungi ed Estrai Retroattivamente</button>
       </div>
       <div id="rulesList" style="display:flex; flex-direction:column; gap:8px;"></div>
     </div>
   </div>
 
-  <!-- TAB 6: FORENSICA E VAULT (NUOVO EXPORT/IMPORT) -->
+  <!-- TAB 6: FORENSICA E VAULT -->
   <div id="tab-forensic" style="display:none;">
     <div class="card">
-      <h3>🔒 Gestione Sessione Vault (AES-GCM)</h3>
-      <p style="font-size: 12px; color: var(--text-muted); margin-bottom:16px;">Cripta l'intera sessione (tutti i fascicoli) in un file locale inaccessibile senza password, o ripristina un lavoro precedente.</p>
+      <h3>🔒 Gestione Esportazione Progetto (AES-256-GCM)</h3>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom:16px;">Tutti i dati sono salvati localmente in tempo reale e cifrati con la tua Master Password. Usa queste opzioni solo per trasferire l'indagine su un'altra macchina (File `.vault`).</p>
       <div class="btn-group">
-        <button class="btn-primary" onclick="exportVaultFile()">Salva Progetto (.vault)</button>
-        <button class="btn-secondary" onclick="document.getElementById('vaultUpload').click()">Carica Progetto (.vault)</button>
+        <button class="btn-primary" onclick="exportVaultFile()">Scarica File .vault</button>
+        <button class="btn-secondary" onclick="document.getElementById('vaultUpload').click()">Importa File .vault</button>
         <input type="file" id="vaultUpload" accept=".vault" style="display:none;" onchange="importVaultFile(event)">
       </div>
     </div>
 
     <div class="card">
-      <h3>⛓️ Registro Audit (Inalterabile)</h3>
+      <h3>⛓️ Registro Audit (Catena Hashing Inalterabile)</h3>
       <div id="auditLog" class="audit-log"></div>
       <div class="btn-group" style="margin-top: 16px;">
-        <button class="btn-secondary" onclick="verifyIntegrity()">Verifica Catena</button>
+        <button class="btn-secondary" onclick="verifyIntegrity()">Verifica Integrità Catena</button>
       </div>
     </div>
     
     <div class="card">
-      <h3>📄 Esportazione Report Statico</h3>
-      <button class="btn-secondary" onclick="exportHTMLBundle()">Genera PDF/HTML del Fascicolo Corrente</button>
+      <h3>📄 Esportazione Fascicolo Corrente</h3>
+      <button class="btn-secondary" onclick="exportHTMLBundle()">Genera Report Analitico (HTML)</button>
     </div>
   </div>
 </div>
 
 <script>
+// Configurazione PDF.js Worker
 if (window['pdfjs-dist/build/pdf']) {
   window['pdfjs-dist/build/pdf'].GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 }
 
-// STATO APPLICAZIONE (Pulito all'avvio)
+// --- GESTIONE STATO E DATABASE (IndexedDB) ---
+let db;
+let masterKey = null; // CryptoKey AES-GCM
+let inactivityTimer;
+
 let state = { 
-  mode: 'LOCKED', 
   workspaces: ['Indagine_Principale'], 
   currentWorkspace: 'Indagine_Principale', 
   docs: [], 
@@ -233,24 +282,59 @@ let state = {
 let customRules = {};
 
 const coreRules = {
-  'email': { regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, class: 'chip-email', label: 'E-Mail' },
-  'iban': { regex: /\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/g, class: 'chip-iban', label: 'IBAN' },
-  'importo': { regex: /(?:€|EUR)\s?\d{1,3}(?:\.\d{3})*(?:,\d{2})?|\d{1,3}(?:\.\d{3})*(?:,\d{2})?\s?(?:€|EUR)/gi, class: 'chip-importo', label: 'Importo' },
-  'cf': { regex: /\b[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]\b/g, class: 'chip-cf', label: 'Cod. Fiscale' },
-  'targa': { regex: /\b[A-Z]{2}\d{3}[A-Z]{2}\b|\b[A-Z]{2}\d{5}\b/g, class: 'chip-targa', label: 'Targa' },
-  'tel': { regex: /\b(?:\+39)?\s?3\d{2}[\s-]?\d{6,7}\b/g, class: 'chip-tel', label: 'Telefono' },
-  'data': { regex: /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g, class: 'chip-data', label: 'Data' }
+  'email': { regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, class: 'c-email', label: 'E-Mail' },
+  'iban': { regex: /\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/g, class: 'c-iban', label: 'IBAN' },
+  'importo': { regex: /(?:€|EUR)\s?\d{1,3}(?:\.\d{3})*(?:,\d{2})?|\d{1,3}(?:\.\d{3})*(?:,\d{2})?\s?(?:€|EUR)/gi, class: 'c-importo', label: 'Importo' },
+  'cf': { regex: /\b[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]\b/g, class: 'c-cf', label: 'Cod. Fiscale' },
+  'targa': { regex: /\b[A-Z]{2}\d{3}[A-Z]{2}\b|\b[A-Z]{2}\d{5}\b/g, class: 'c-targa', label: 'Targa' },
+  'tel': { regex: /\b(?:\+39)?\s?3\d{2}[\s-]?\d{6,7}\b/g, class: 'c-tel', label: 'Telefono' },
+  'data': { regex: /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g, class: 'c-data', label: 'Data' }
 };
 
-// --- FUNZIONI DI SANITIZZAZIONE E SICUREZZA (Anti-XSS) ---
-function escapeHTML(str) {
-  if (!str) return "";
-  return str.toString().replace(/[&<>'"]/g, 
-    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])
-  );
+// Inizializza IndexedDB
+const requestDB = indexedDB.open("VaultAI_Forensic", 1);
+requestDB.onupgradeneeded = (e) => {
+  db = e.target.result;
+  if (!db.objectStoreNames.contains('secureVault')) {
+    db.createObjectStore('secureVault', { keyPath: 'id' });
+  }
+};
+requestDB.onsuccess = (e) => { db = e.target.result; };
+
+// Auto-Lock su inattività (15 min)
+function resetInactivity() {
+  clearTimeout(inactivityTimer);
+  if(masterKey) inactivityTimer = setTimeout(lockSystem, 15 * 60 * 1000);
+}
+window.addEventListener('mousemove', resetInactivity);
+window.addEventListener('keypress', resetInactivity);
+
+// Sostituzione nativa Alert/Prompt
+let modalCallback = null;
+function openModal(title, msg, isPrompt = false, callback = null) {
+  document.getElementById('modalTitle').innerText = title;
+  document.getElementById('modalMsg').innerText = msg;
+  document.getElementById('modalInputContainer').style.display = isPrompt ? 'block' : 'none';
+  const inp = document.getElementById('modalInput');
+  inp.value = '';
+  modalCallback = callback;
+  
+  let btns = `<button class="btn-primary" onclick="submitModal()">OK</button>`;
+  if(isPrompt) btns = `<button class="btn-secondary" onclick="closeModal()">Annulla</button>` + btns;
+  document.getElementById('modalBtns').innerHTML = btns;
+  
+  document.getElementById('customModalOverlay').style.display = 'flex';
+  if(isPrompt) setTimeout(()=>inp.focus(), 50);
+}
+function closeModal() { document.getElementById('customModalOverlay').style.display = 'none'; modalCallback = null; }
+function submitModal() {
+  const val = document.getElementById('modalInput').value;
+  closeModal();
+  if(modalCallback) modalCallback(val);
 }
 
-// --- CRITTOGRAFIA E HASHING ---
+// --- CRITTOGRAFIA ---
+function fallbackSHA256(str) { return Array.from(new TextEncoder().encode(str)).reduce((acc, val) => acc + val.toString(16), "").substring(0,64); }
 async function computeHash(text) {
   if (window.crypto && crypto.subtle) {
     try {
@@ -260,21 +344,7 @@ async function computeHash(text) {
   }
   return fallbackSHA256(text);
 }
-// Hash puro JS
-function fallbackSHA256(ascii) {
-  function rightRotate(v, a) { return (v>>>a) | (v<<(32 - a)); }
-  let mathPow = Math.pow, maxWord = mathPow(2, 32), result = '', words = []; let asciiBitLength = ascii.length * 8;
-  let hash = [1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225];
-  let k = [1116352408, 1899447441, 3049323471, 3921009573, 965077380, 1508970993, 2453635748, 2870763221, 3624381080, 310598401, 607225278, 1426881987, 1925078365, 2162078206, 2614888103, 3248222580, 3835390401, 4022224774, 264347078, 604807628, 770255983, 1249150122, 1555081692, 1996064986, 2554220882, 2821834349, 2952996808, 3210313671, 3336571891, 3584528711, 113926993, 338241895, 666307205, 773529912, 1294757372, 1396182291, 1695183700, 1986661051, 2177026350, 2456956037, 2730485921, 2820302411, 3259730800, 3345764771, 3516065817, 3600352804, 4094571909, 275423344, 430227734, 506948616, 659060556, 883997877, 958139571, 1322822218, 1537002063, 1747873779, 1955562222, 2024104815, 2227730452, 2361852424, 2428436474, 2756734187, 3204031479, 3329325298];
-  ascii += '\x80'; while (ascii.length % 64 - 56) ascii += '\x00';
-  for (let i = 0; i < ascii.length; i++) words[i>>2] |= ascii.charCodeAt(i) << ((3 - i)%4)*8;
-  words[words.length] = ((asciiBitLength/maxWord)|0); words[words.length] = (asciiBitLength);
-  for (let j = 0; j < words.length;) { let w = words.slice(j, j += 16), oldHash = hash.slice(0); for (let i = 0; i < 64; i++) { let w15 = w[i - 15], w2 = w[i - 2], a = hash[0], e = hash[4]; let temp1 = hash[7] + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25)) + ((e&hash[5])^((~e)&hash[6])) + k[i] + (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15>>>3)) + w[i - 7] + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2>>>10)))|0); let temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22)) + ((a&hash[1])^(a&hash[2])^(hash[1]&hash[2])); hash = [(temp1 + temp2)|0].concat(hash); hash[4] = (hash[4] + temp1)|0; } for (let i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i])|0; }
-  for (let i = 0; i < 8; i++) for (let j = 3; j + 1; j--) { let b = (hash[i]>>(j*8))&255; result += ((b < 16) ? 0 : '') + b.toString(16); }
-  return result;
-}
 
-// AES-GCM (Web Crypto)
 async function deriveKey(password, salt) {
   const enc = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(password), {name: "PBKDF2"}, false, ["deriveKey"]);
@@ -284,7 +354,89 @@ async function deriveKey(password, salt) {
   );
 }
 
+async function saveEncryptedState() {
+  if(!masterKey || !db) return;
+  try {
+    const payload = JSON.stringify({ state, rules: Object.keys(customRules).map(k=>({id:k, r:customRules[k].regex.source, l:customRules[k].label})) });
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, masterKey, new TextEncoder().encode(payload));
+    
+    const tx = db.transaction('secureVault', 'readwrite');
+    tx.objectStore('secureVault').put({ id: 'main', iv: Array.from(iv), data: Array.from(new Uint8Array(encrypted)) });
+  } catch(e) { console.error("Save Error:", e); }
+}
+
+async function loadEncryptedState(password) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('secureVault', 'readonly');
+    const getReq = tx.objectStore('secureVault').get('main');
+    getReq.onsuccess = async (e) => {
+      const record = e.target.result;
+      if(!record) return resolve(false); // Nessun DB
+      try {
+        const saltReq = tx.objectStore('secureVault').get('salt'); // Recuperiamo il salt
+        saltReq.onsuccess = async (ev) => {
+          const salt = ev.target.result ? new Uint8Array(ev.target.result.val) : new Uint8Array(16);
+          const key = await deriveKey(password, salt);
+          try {
+            const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(record.iv) }, key, new Uint8Array(record.data));
+            const payload = JSON.parse(new TextDecoder().decode(decrypted));
+            masterKey = key;
+            resolve(payload);
+          } catch(err) { reject("Password errata."); }
+        };
+      } catch(err) { reject(err); }
+    };
+  });
+}
+
 // --- BOOT E LOGGING ---
+async function unlockVault() {
+  const pwd = document.getElementById('pinInput').value;
+  if (!pwd) return openModal("Errore", "Inserisci una password.");
+  
+  try {
+    const loaded = await loadEncryptedState(pwd);
+    if(loaded) {
+      state = loaded.state;
+      customRules = {};
+      loaded.rules.forEach(r => { customRules[r.id] = { regex: new RegExp(r.r, 'g'), class:'c-custom', label:r.l }; });
+    } else {
+      // Primo avvio
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      masterKey = await deriveKey(pwd, salt);
+      const tx = db.transaction('secureVault', 'readwrite');
+      tx.objectStore('secureVault').put({ id: 'salt', val: Array.from(salt) });
+      await saveEncryptedState();
+    }
+    
+    document.getElementById('modeIndicator').innerText = "DECRYPTED";
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('workspaceSelectorContainer').style.display = 'flex';
+    document.getElementById('mainTabs').style.display = 'flex';
+    document.getElementById('pinInput').value = '';
+    
+    switchTab('docs');
+    await logAction("SYSTEM_UNLOCKED");
+    renderWorkspaces();
+    renderRulesList();
+    renderAllViews();
+    resetInactivity();
+    
+  } catch(e) {
+    openModal("Accesso Negato", "Master Password errata o file corrotto.");
+  }
+}
+
+function lockSystem() {
+  masterKey = null; state = { workspaces: ['Indagine_Principale'], currentWorkspace: 'Indagine_Principale', docs: [], audit: [] }; customRules = {};
+  document.getElementById('lockScreen').style.display = 'flex';
+  document.getElementById('workspaceSelectorContainer').style.display = 'none';
+  document.getElementById('mainTabs').style.display = 'none';
+  document.getElementById('modeIndicator').innerText = "LOCKED";
+  ['docsList', 'timelineContainer', 'statsContainer', 'auditLog', 'rulesList'].forEach(id => document.getElementById(id).innerHTML = '');
+}
+
 async function logAction(actionName) {
   const ts = new Date().toISOString();
   const prevHash = state.audit.length > 0 ? state.audit[state.audit.length - 1].hash : "GENESIS_BLOCK";
@@ -292,25 +444,34 @@ async function logAction(actionName) {
   const currentHash = await computeHash(rawData);
   state.audit.push({ time: ts, action: actionName, prev: prevHash.substring(0, 16), hash: currentHash.substring(0, 16), _raw: rawData });
   renderAudit();
+  saveEncryptedState();
 }
 
-async function unlockVault() {
-  const pin = document.getElementById('pinInput').value;
-  if (pin === '1234') {
-    state.mode = 'MASTER';
-    document.getElementById('modeIndicator').innerText = "MASTER";
-    document.getElementById('lockScreen').style.display = 'none';
-    document.getElementById('workspaceSelectorContainer').style.display = 'flex';
-    document.getElementById('mainTabs').style.display = 'flex';
-    switchTab('docs');
-    await logAction("SYSTEM_BOOT");
-    renderWorkspaces();
-    renderRulesList();
-    renderAllViews();
-  } else { alert("PIN Errato."); }
+// --- SANITIZZAZIONE E HIGHLIGHTING (DOM Purify minimal) ---
+function escapeHTML(str) {
+  if (!str) return "";
+  return str.toString().replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag]));
 }
 
-// --- GESTIONE WORKSPACE (FASCICOLI) ---
+function highlightEntities(text, entities) {
+  let escaped = escapeHTML(text);
+  // Sort entities by length descending to prevent partial replacements overlapping
+  const sorted = [...entities].sort((a,b) => b.val.length - a.val.length);
+  // Create a safe map for replacement
+  const map = {};
+  sorted.forEach((e, i) => {
+    const key = `__MARKER_${i}__`;
+    map[key] = `<mark class="${e.class}">${escapeHTML(e.val)}</mark>`;
+    // Escape string for Regex
+    const safeVal = escapeHTML(e.val).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    escaped = escaped.replace(new RegExp(safeVal, 'g'), key);
+  });
+  // Re-inject HTML
+  Object.keys(map).forEach(key => { escaped = escaped.split(key).join(map[key]); });
+  return escaped;
+}
+
+// --- GESTIONE WORKSPACE ---
 function renderWorkspaces() {
   const sel = document.getElementById('workspaceSelect');
   sel.innerHTML = state.workspaces.map(w => `<option value="${escapeHTML(w)}" ${w===state.currentWorkspace?'selected':''}>${escapeHTML(w)}</option>`).join('');
@@ -319,19 +480,18 @@ function changeWorkspace() {
   state.currentWorkspace = document.getElementById('workspaceSelect').value;
   renderAllViews();
 }
-function newWorkspace() {
-  const name = prompt("Nome nuovo fascicolo:");
-  if(name && !state.workspaces.includes(name)) {
-    state.workspaces.push(name);
-    state.currentWorkspace = name;
-    renderWorkspaces();
-    renderAllViews();
-    logAction("CREATED_WORKSPACE: " + name);
-  }
+function promptNewWorkspace() {
+  openModal("Nuovo Fascicolo", "Inserisci il nome del fascicolo:", true, (name) => {
+    if(name && !state.workspaces.includes(name)) {
+      state.workspaces.push(name);
+      state.currentWorkspace = name;
+      renderWorkspaces();
+      renderAllViews();
+      logAction("CREATED_WORKSPACE: " + name);
+    }
+  });
 }
-function getActiveDocs() {
-  return state.docs.filter(d => d.workspace === state.currentWorkspace);
-}
+function getActiveDocs() { return state.docs.filter(d => d.workspace === state.currentWorkspace); }
 
 // --- NER & REGOLE ---
 function addCustomRule() {
@@ -341,17 +501,20 @@ function addCustomRule() {
   try {
     const regex = new RegExp(regexStr, 'g');
     const id = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    customRules[id] = { regex: regex, class: 'chip-custom', label: name };
+    customRules[id] = { regex: regex, class: 'c-custom', label: name };
     document.getElementById('ruleName').value = ''; document.getElementById('ruleRegex').value = '';
-    renderRulesList();
-    state.docs.forEach(d => d.entities = extractEntities(d.content)); // Ricalcola per tutti
-    renderAllViews();
-  } catch(e) { alert("Errore Regex: " + e.message); }
+    
+    // Ricalcola
+    state.docs.forEach(d => d.entities = extractEntities(d.content));
+    saveEncryptedState();
+    renderRulesList(); renderAllViews();
+  } catch(e) { openModal("Errore", "Regex non valida: " + e.message); }
 }
 function removeRule(id) {
-  delete customRules[id]; renderRulesList();
+  delete customRules[id];
   state.docs.forEach(d => d.entities = extractEntities(d.content));
-  renderAllViews();
+  saveEncryptedState();
+  renderRulesList(); renderAllViews();
 }
 function renderRulesList() {
   const container = document.getElementById('rulesList'); container.innerHTML = '';
@@ -373,10 +536,9 @@ function extractEntities(text) {
   return entities.filter((v,i,a)=>a.findIndex(t=>(t.type===v.type && t.val===v.val))===i);
 }
 
-// --- GESTIONE DOCUMENTI E SANITIZZAZIONE ---
+// --- DOCUMENTI ---
 function cleanExtractedText(text) {
   let clean = text.replace(/\b(?:obj|endobj|stream|endstream|xref|trailer|startxref|\%PDF-\d\.\d)\b/g, '');
-  clean = clean.replace(/\/[A-Za-z0-9#_]+\s/g, ' ');
   clean = clean.replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, '').replace(/\s{2,}/g, ' ');
   return clean.trim();
 }
@@ -407,9 +569,9 @@ async function addDocument() {
 
 function redactInput() {
   let t = document.getElementById('docContent').value;
-  t = t.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "[EMAIL_OSCURATA]");
-  t = t.replace(/\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/g, "[IBAN_OSCURATO]");
-  t = t.replace(/(?:€|EUR)\s?\d+(?:[.,]\d+)?/gi, "[IMPORTO]");
+  t = t.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "█████████");
+  t = t.replace(/\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/g, "████████████████");
+  t = t.replace(/(?:€|EUR)\s?\d+(?:[.,]\d+)?/gi, "[IMPORTO_OSCURATO]");
   document.getElementById('docContent').value = t;
 }
 
@@ -417,13 +579,15 @@ async function handleFileUpload(event) {
   const files = event.target.files;
   if (!files || files.length === 0) return;
   const btn = document.getElementById('uploadBtn'); const og = btn.innerHTML;
-  btn.innerHTML = "⏳ ESTREZIONE..."; btn.disabled = true;
+  btn.innerHTML = "⏳ ELABORAZIONE..."; btn.disabled = true;
+  
   for (let file of files) {
     try {
       let text = await extractTextFromFile(file);
       await processDoc(file.name, text);
     } catch(e) { console.error(e); }
   }
+  
   renderAllViews();
   event.target.value = ""; btn.innerHTML = og; btn.disabled = false;
 }
@@ -462,7 +626,7 @@ async function extractTextFromFile(file) {
   }
 }
 
-// --- RENDERING VISTE ---
+// --- RENDER VIEWS ---
 function renderAllViews() {
   renderDocs();
   renderTimeline();
@@ -487,24 +651,26 @@ function renderDocs() {
   }
 
   docs.forEach((doc) => {
-    if(q && !doc.title.toLowerCase().includes(q) && !doc.content.toLowerCase().includes(q) && !doc.entities.some(e=>e.val.toLowerCase().includes(q))) return;
+    if(q && !doc.title.toLowerCase().includes(q) && !doc.content.toLowerCase().includes(q) && !doc.entities.some(e=>e.val.toLowerCase().includes(q)) && !doc.hash.toLowerCase().includes(q)) return;
     
     const grouped = {};
     doc.entities.forEach(e => { if(!grouped[e.type]) grouped[e.type] = { class: e.class, items: [] }; grouped[e.type].items.push(e.val); });
     
     let html = '';
     Object.entries(grouped).forEach(([type, data]) => {
-      html += `<div class="entity-group"><div class="entity-group-title">${escapeHTML(type)}</div><div class="entity-chips">${data.items.map(val => `<span class="chip ${data.class}">${escapeHTML(val)}</span>`).join('')}</div></div>`;
+      html += `<div style="margin-bottom: 8px;"><span style="font-size:11px; color:#888; text-transform:uppercase; margin-right:8px;">${escapeHTML(type)}:</span><div class="entity-chips" style="display:inline-flex;">${data.items.map(val => `<span class="chip ${data.class}">${escapeHTML(val)}</span>`).join('')}</div></div>`;
     });
     
-    const needsFade = doc.content.length > 300;
+    const needsFade = doc.content.length > 400;
+    const highlightedText = highlightEntities(doc.content, doc.entities);
+    
     list.innerHTML += `
       <div class="doc-record">
-        <div class="doc-header"><div class="doc-title">📄 ${escapeHTML(doc.title)}</div><div class="doc-hash">H: ${doc.hash}</div></div>
+        <div class="doc-header"><div class="doc-title">📄 ${escapeHTML(doc.title)}</div><div class="doc-hash">SHA-256: ${doc.hash}</div></div>
         <div class="doc-body">
-          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">${html||'<span style="color:#555;font-size:12px;">Nessuna entità trovata.</span>'}</div>
+          <div style="background:#111; padding:12px; border-radius:6px; border:1px solid #222;">${html||'<span style="color:#555;font-size:12px;">Nessuna entità identificata.</span>'}</div>
           <div id="txt_${doc.id}" class="text-box" ${needsFade ? `onclick="toggleTextExpand('txt_${doc.id}')"` : ''}>
-            ${escapeHTML(doc.content)}${needsFade ? `<div class="text-box-fade">Espandi testo</div>` : ''}
+            ${highlightedText}${needsFade ? `<div class="text-box-fade">Mostra tutto</div>` : ''}
           </div>
         </div>
       </div>
@@ -512,21 +678,17 @@ function renderDocs() {
   });
 }
 
-function parseItalianDate(dateStr) {
-  const parts = dateStr.split(/[\/\-]/);
-  if(parts.length === 3) return new Date(parts[2], parts[1]-1, parts[0]).getTime();
-  return 0;
-}
-
 function renderTimeline() {
   const container = document.getElementById('timelineContainer'); container.innerHTML = '';
   let events = [];
   getActiveDocs().forEach(doc => {
     doc.entities.filter(e => e.type === 'Data').forEach(e => {
-      events.push({ dateStr: e.val, ts: parseItalianDate(e.val), docTitle: doc.title, snippet: doc.content.substring(0, 100)+"..." });
+      const parts = e.val.split(/[\/\-]/);
+      const ts = parts.length === 3 ? new Date(parts[2], parts[1]-1, parts[0]).getTime() : 0;
+      events.push({ dateStr: e.val, ts: ts, docTitle: doc.title, snippet: doc.content.substring(0, 120)+"..." });
     });
   });
-  if(events.length === 0) { container.innerHTML = `<div style="color:#555; font-size:13px; text-align:center;">Nessuna data per la timeline in questo fascicolo.</div>`; return; }
+  if(events.length === 0) { container.innerHTML = `<div style="color:#555; font-size:13px; text-align:center;">Nessuna data rilevata nei reperti.</div>`; return; }
   events.sort((a,b) => a.ts - b.ts);
   events = events.filter((v,i,a)=>a.findIndex(t=>(t.dateStr===v.dateStr && t.docTitle===v.docTitle))===i);
   events.forEach(ev => {
@@ -550,34 +712,38 @@ function renderStats() {
   }
   
   let html = '';
-  sorted.slice(0,20).forEach(([key, count]) => { // Top 20
+  sorted.slice(0,30).forEach(([key, count]) => {
     const [type, val, cls] = key.split("|||");
     html += `<div class="stat-row">
       <div style="display:flex; align-items:center; gap:10px;">
-        <span class="chip ${cls}" style="min-width:70px; justify-content:center;">${escapeHTML(type)}</span> 
+        <span class="chip ${cls}" style="min-width:80px; justify-content:center;">${escapeHTML(type)}</span> 
         <span style="font-weight:600; font-size:14px;">${escapeHTML(val)}</span>
       </div>
-      <div style="color:var(--accent); font-weight:bold; font-size:14px;">${count} volte</div>
+      <div style="color:var(--accent); font-weight:bold; font-size:14px;">${count}</div>
     </div>`;
   });
   container.innerHTML = html;
 }
 
-// --- GRAFO E FOCUS MODE ---
+// --- GRAFO (OTTIMIZZATO CON PAN, ZOOM E COOLING) ---
 let graphNodes = [], graphEdges = [], animFrame = null, dragNode = null, focusNode = null;
+let viewTransform = { x: 0, y: 0, k: 1 };
+let isDraggingBackground = false;
+let lastMouse = {x:0, y:0};
+
 function initGraph() {
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
-  graphNodes = []; graphEdges = []; focusNode = null;
+  graphNodes = []; graphEdges = []; focusNode = null; viewTransform = { x: 0, y: 0, k: 1 };
   let eMap = {};
   
   getActiveDocs().forEach(doc => {
-    let nd = { id: doc.id, label: doc.title.substring(0,12)+"..", type: 'doc', x: Math.random()*300+50, y: Math.random()*300+50, vx:0, vy:0, connected: [] };
+    let nd = { id: doc.id, label: doc.title.substring(0,12)+"..", type: 'doc', x: Math.random()*800, y: Math.random()*800, vx:0, vy:0, connected: [] };
     graphNodes.push(nd);
     
     doc.entities.forEach(ent => {
       let eId = 'e_' + ent.val;
       if(!eMap[eId]) {
-        let ne = { id: eId, label: ent.val, type: ent.type, class: ent.class, x: Math.random()*300+50, y: Math.random()*300+50, vx:0, vy:0, connected: [] };
+        let ne = { id: eId, label: ent.val, type: ent.type, class: ent.class, x: Math.random()*800, y: Math.random()*800, vx:0, vy:0, connected: [] };
         graphNodes.push(ne); eMap[eId] = ne;
       }
       graphEdges.push({ source: nd, target: eMap[eId] });
@@ -587,41 +753,57 @@ function initGraph() {
   updateGraph();
 }
 
-function resetFocus() { focusNode = null; }
+function zoomGraph(factor) {
+  const cvs = document.getElementById('graphCanvas');
+  const cx = cvs.width / 2, cy = cvs.height / 2;
+  viewTransform.x = cx - (cx - viewTransform.x) * factor;
+  viewTransform.y = cy - (cy - viewTransform.y) * factor;
+  viewTransform.k *= factor;
+  updateGraph(true); // Forza un frame
+}
+function resetGraphView() { viewTransform = {x:0, y:0, k:1}; focusNode=null; updateGraph(true); }
 
-function updateGraph() {
+function updateGraph(forceRender = false) {
   const cvs = document.getElementById('graphCanvas'); const ctx = cvs.getContext('2d');
   const dpr = window.devicePixelRatio || 1; const rect = cvs.getBoundingClientRect();
   if(cvs.width !== rect.width * dpr) { cvs.width = rect.width * dpr; cvs.height = rect.height * dpr; }
-  ctx.save(); ctx.scale(dpr, dpr); const w = rect.width, h = rect.height;
+  
+  let kineticEnergy = 0;
 
+  // Calcolo Forze
   graphNodes.forEach(n1 => {
     graphNodes.forEach(n2 => {
       if(n1===n2) return;
       let dx=n2.x-n1.x, dy=n2.y-n1.y, dist=Math.sqrt(dx*dx+dy*dy)||1;
-      if(dist<160) { let force=-300/(dist*dist); n1.vx+=(dx/dist)*force; n1.vy+=(dy/dist)*force; }
+      if(dist<200) { let force=-400/(dist*dist); n1.vx+=(dx/dist)*force; n1.vy+=(dy/dist)*force; }
     });
-    n1.vx+=(w/2-n1.x)*0.003; n1.vy+=(h/2-n1.y)*0.003;
+    n1.vx+=(400-n1.x)*0.001; n1.vy+=(400-n1.y)*0.001; // Gravità verso centro logico
   });
   
   graphEdges.forEach(e => {
     let dx=e.target.x-e.source.x, dy=e.target.y-e.source.y, dist=Math.sqrt(dx*dx+dy*dy)||1;
-    let force=(dist-70)*0.05; e.source.vx+=(dx/dist)*force; e.source.vy+=(dy/dist)*force;
+    let force=(dist-80)*0.03; e.source.vx+=(dx/dist)*force; e.source.vy+=(dy/dist)*force;
     e.target.vx-=(dx/dist)*force; e.target.vy-=(dy/dist)*force;
   });
 
-  ctx.clearRect(0,0,w,h);
-  
+  // Applica Forze
   graphNodes.forEach(n => {
-    if(n!==dragNode) { n.x+=n.vx; n.y+=n.vy; if(n.x<15)n.x=15; if(n.x>w-15)n.x=w-15; if(n.y<15)n.y=15; if(n.y>h-15)n.y=h-15; }
-    n.vx*=0.8; n.vy*=0.8;
+    if(n!==dragNode) { n.x+=n.vx; n.y+=n.vy; }
+    n.vx*=0.85; n.vy*=0.85;
+    kineticEnergy += Math.abs(n.vx) + Math.abs(n.vy);
   });
 
-  ctx.lineWidth = 1.5;
+  // Render
+  ctx.save();
+  ctx.clearRect(0,0, cvs.width, cvs.height);
+  ctx.translate(viewTransform.x, viewTransform.y);
+  ctx.scale(viewTransform.k, viewTransform.k);
+
+  ctx.lineWidth = 1.5 / viewTransform.k;
   graphEdges.forEach(e => {
     let active = true;
     if(focusNode && focusNode !== e.source && focusNode !== e.target) active = false;
-    ctx.strokeStyle = active ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.03)';
+    ctx.strokeStyle = active ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.05)';
     ctx.beginPath(); ctx.moveTo(e.source.x, e.source.y); ctx.lineTo(e.target.x, e.target.y); ctx.stroke();
   });
 
@@ -629,77 +811,119 @@ function updateGraph() {
     let alpha = 1;
     if(focusNode && focusNode !== n && !focusNode.connected.includes(n)) alpha = 0.15;
     ctx.globalAlpha = alpha;
-    ctx.beginPath(); ctx.arc(n.x, n.y, n.type==='doc'?14:6, 0, Math.PI*2);
+    ctx.beginPath(); ctx.arc(n.x, n.y, n.type==='doc'?16:8, 0, Math.PI*2);
+    
     if(n.type==='doc') ctx.fillStyle='#00e5ff';
-    else if(n.class==='chip-email') ctx.fillStyle='#2196f3';
-    else if(n.class==='chip-iban') ctx.fillStyle='#ffeb3b';
-    else if(n.class==='chip-importo') ctx.fillStyle='#00e676';
-    else if(n.class==='chip-cf') ctx.fillStyle='#e91e63';
-    else if(n.class==='chip-targa') ctx.fillStyle='#00bcd4';
-    else if(n.class==='chip-tel') ctx.fillStyle='#9c27b0';
-    else if(n.class==='chip-data') ctx.fillStyle='#795548';
+    else if(n.class==='c-email') ctx.fillStyle='#2196f3';
+    else if(n.class==='c-iban') ctx.fillStyle='#ffeb3b';
+    else if(n.class==='c-importo') ctx.fillStyle='#00e676';
+    else if(n.class==='c-cf') ctx.fillStyle='#e91e63';
+    else if(n.class==='c-targa') ctx.fillStyle='#00bcd4';
+    else if(n.class==='c-tel') ctx.fillStyle='#9c27b0';
+    else if(n.class==='c-data') ctx.fillStyle='#795548';
     else ctx.fillStyle='#b388ff';
     
-    if(n === focusNode) { ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke(); }
-    ctx.fill(); ctx.fillStyle='#fff'; ctx.font='10px sans-serif'; ctx.fillText(n.label, n.x+14, n.y+4);
+    if(n === focusNode) { ctx.lineWidth = 3/viewTransform.k; ctx.strokeStyle = '#fff'; ctx.stroke(); }
+    ctx.fill(); 
+    
+    ctx.fillStyle='#fff'; 
+    ctx.font = `${11/viewTransform.k}px sans-serif`; 
+    ctx.fillText(n.label, n.x+18, n.y+4);
     ctx.globalAlpha = 1;
   });
-  ctx.restore(); animFrame = requestAnimationFrame(updateGraph);
+  ctx.restore();
+
+  // Kinetic Cooling: se l'energia è bassa e non c'è drag, ferma l'animazione per risparmiare risorse
+  if(kineticEnergy > 1.5 || dragNode || isDraggingBackground || forceRender) {
+    animFrame = requestAnimationFrame(() => updateGraph());
+  } else {
+    animFrame = null;
+  }
 }
 
+// Eventi Canvas
 const cvs = document.getElementById('graphCanvas');
-function getPtr(e) { const r = cvs.getBoundingClientRect(); return { x: (e.touches?e.touches[0].clientX:e.clientX)-r.left, y: (e.touches?e.touches[0].clientY:e.clientY)-r.top }; }
+function getPtrLogico(e) {
+  const r = cvs.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+  const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+  return { 
+    rawX: x, rawY: y,
+    logX: (x * dpr - viewTransform.x) / viewTransform.k, 
+    logY: (y * dpr - viewTransform.y) / viewTransform.k 
+  };
+}
+
 cvs.addEventListener('mousedown', e => { 
-  let n = graphNodes.find(n=>Math.hypot(n.x-getPtr(e).x, n.y-getPtr(e).y)<25);
-  if(n) { dragNode = n; focusNode = n; } else { focusNode = null; }
+  const p = getPtrLogico(e);
+  let n = graphNodes.find(n => Math.hypot(n.x - p.logX, n.y - p.logY) < 25 / viewTransform.k);
+  if(n) { dragNode = n; focusNode = n; if(!animFrame) updateGraph(true); } 
+  else { isDraggingBackground = true; lastMouse = {x: p.rawX, y: p.rawY}; focusNode = null; if(!animFrame) updateGraph(true); }
 });
-cvs.addEventListener('touchstart', e => {
-  let n = graphNodes.find(n=>Math.hypot(n.x-getPtr(e).x, n.y-getPtr(e).y)<25);
-  if(n) { dragNode = n; focusNode = n; } else { focusNode = null; }
-}, {passive:true});
-window.addEventListener('mousemove', e=> { if(dragNode) { dragNode.x=getPtr(e).x; dragNode.y=getPtr(e).y; dragNode.vx=0; dragNode.vy=0; }});
-window.addEventListener('touchmove', e=> { if(dragNode) { e.preventDefault(); dragNode.x=getPtr(e).x; dragNode.y=getPtr(e).y; }}, {passive:false});
-window.addEventListener('mouseup', ()=>dragNode=null); window.addEventListener('touchend', ()=>dragNode=null);
+window.addEventListener('mousemove', e => { 
+  const p = getPtrLogico(e);
+  if(dragNode) { dragNode.x = p.logX; dragNode.y = p.logY; dragNode.vx=0; dragNode.vy=0; if(!animFrame) updateGraph(true); }
+  else if(isDraggingBackground) {
+    const dpr = window.devicePixelRatio || 1;
+    viewTransform.x += (p.rawX - lastMouse.x) * dpr;
+    viewTransform.y += (p.rawY - lastMouse.y) * dpr;
+    lastMouse = {x: p.rawX, y: p.rawY};
+    if(!animFrame) updateGraph(true);
+  }
+});
+window.addEventListener('mouseup', () => { dragNode = null; isDraggingBackground = false; });
+cvs.addEventListener('wheel', e => {
+  e.preventDefault();
+  zoomGraph(e.deltaY < 0 ? 1.1 : 0.9);
+});
 
-
+// --- MENU TAB ---
 function switchTab(tId) {
   ['docs','timeline','graph','stats','rules','forensic'].forEach(t => document.getElementById('tab-'+t).style.display = t===tId?'block':'none');
   document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', ['docs','timeline','graph','stats','rules','forensic'][i]===tId));
   if(tId==='graph') initGraph(); else if(animFrame){ cancelAnimationFrame(animFrame); animFrame=null; }
 }
 
+// --- AUDIT & EXPORT ---
 function renderAudit() {
   document.getElementById('auditLog').innerHTML = state.audit.map(b => 
-    `<div><span style="color:#666">[${b.time.slice(11,19)}]</span> <b>${escapeHTML(b.action)}</b><br><span style="color:#666">H: ${b.hash}</span></div>`
+    `<div><span style="color:#666">[${b.time.slice(11,19)}]</span> <b>${escapeHTML(b.action)}</b><br><span style="color:#666">SHA: ${b.hash}</span></div>`
   ).join('<hr style="border-color:#222; margin:6px 0;">');
 }
 async function verifyIntegrity() {
   for(let i=0; i<state.audit.length; i++) {
     if((await computeHash(state.audit[i]._raw)).substring(0,16) !== state.audit[i].hash || (i>0 && state.audit[i].prev !== state.audit[i-1].hash))
-      return alert("ALLARME: Manomissione RAM al blocco "+i);
+      return openModal("ALLARME SICUREZZA", "Manomissione rilevata nella catena al blocco " + i);
   }
-  alert("✅ Verifica superata: Catena di custodia matematica integra.");
+  openModal("Verifica Superata", "Catena di custodia matematica integra al 100%.");
 }
 
-// --- EXPORT/IMPORT VAULT (AES-GCM) ---
+function exportCSV() {
+  let csv = "Entita,Valore,Occorrenze\n";
+  let counts = {};
+  getActiveDocs().forEach(d => d.entities.forEach(e => {
+    let key = e.type + "|||" + e.val; counts[key] = (counts[key] || 0) + 1;
+  }));
+  Object.entries(counts).sort((a,b) => b[1] - a[1]).forEach(([k, c]) => {
+    const p = k.split("|||"); csv += `"${p[0]}","${p[1]}",${c}\n`;
+  });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv"}));
+  a.download = `Export_Statistiche_${state.currentWorkspace}.csv`; a.click();
+}
+
 async function exportVaultFile() {
-  if(!window.crypto || !crypto.subtle) return alert("Web Crypto API non supportate (usa HTTPS o localhost per cifrare file).");
-  const pwd = prompt("Crea una Password forte per crittografare questa sessione:");
-  if(!pwd) return;
-  try {
-    const payload = JSON.stringify({ state: state, rules: Object.keys(customRules).map(k=>({id:k, r:customRules[k].regex.source, l:customRules[k].label})) });
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const key = await deriveKey(pwd, salt);
-    const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, new TextEncoder().encode(payload));
-    
-    const vaultData = JSON.stringify({ s: Array.from(salt), i: Array.from(iv), c: Array.from(new Uint8Array(encrypted)) });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([vaultData], {type:"application/json"}));
-    a.download = `Vault_Session_${Date.now()}.vault`;
-    a.click();
-    logAction("VAULT_SESSION_EXPORTED");
-  } catch(e) { alert("Errore di crittografia: " + e); }
+  if(!masterKey) return;
+  const payload = JSON.stringify({ state: state, rules: Object.keys(customRules).map(k=>({id:k, r:customRules[k].regex.source, l:customRules[k].label})) });
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, masterKey, new TextEncoder().encode(payload));
+  
+  const vaultData = JSON.stringify({ i: Array.from(iv), c: Array.from(new Uint8Array(encrypted)) });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([vaultData], {type:"application/json"}));
+  a.download = `Backup_${state.currentWorkspace}_${Date.now()}.vault`;
+  a.click();
+  logAction("VAULT_FILE_EXPORTED");
 }
 
 function importVaultFile(event) {
@@ -709,25 +933,18 @@ function importVaultFile(event) {
   reader.onload = async (e) => {
     try {
       const vault = JSON.parse(e.target.result);
-      const pwd = prompt("Inserisci la Password per decrittare la sessione:");
-      if(!pwd) return;
-      const key = await deriveKey(pwd, new Uint8Array(vault.s));
-      const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(vault.i) }, key, new Uint8Array(vault.c));
-      
+      if(!masterKey) throw new Error("Sistema bloccato");
+      const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(vault.i) }, masterKey, new Uint8Array(vault.c));
       const payload = JSON.parse(new TextDecoder().decode(decrypted));
-      state = payload.state;
-      customRules = {};
-      payload.rules.forEach(r => { customRules[r.id] = { regex: new RegExp(r.r, 'g'), class:'chip-custom', label:r.l }; });
       
-      renderWorkspaces();
-      renderRulesList();
-      renderAllViews();
-      logAction("VAULT_SESSION_RESTORED");
-      alert("✅ Progetto ripristinato con successo.");
-    } catch(err) {
-      alert("❌ Password errata o file corrotto.");
-      console.error(err);
-    }
+      state = payload.state; customRules = {};
+      payload.rules.forEach(r => { customRules[r.id] = { regex: new RegExp(r.r, 'g'), class:'c-custom', label:r.l }; });
+      
+      saveEncryptedState();
+      renderWorkspaces(); renderRulesList(); renderAllViews();
+      logAction("VAULT_FILE_RESTORED");
+      openModal("Successo", "Progetto ripristinato correttamente.");
+    } catch(err) { openModal("Errore", "Impossibile decriptare. File corrotto o Master Password attuale diversa da quella del file."); }
   };
   reader.readAsText(file);
   event.target.value = "";
@@ -735,7 +952,7 @@ function importVaultFile(event) {
 
 async function exportHTMLBundle() {
   await logAction("EXPORT_REPORT_STATIC");
-  let h = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>VaultAI Report</title><style>body{font-family:sans-serif;padding:40px;background:#fff;color:#000;} .doc{border:1px solid #ccc;padding:20px;margin-bottom:20px;border-radius:8px} .t{font-size:12px;background:#eee;padding:4px 8px;border-radius:4px;margin:2px;display:inline-block;border:1px solid #ddd;}</style></head><body><h1>Report Forense: ${escapeHTML(state.currentWorkspace)}</h1><hr>`;
+  let h = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>VaultAI Report - ${escapeHTML(state.currentWorkspace)}</title><style>body{font-family:sans-serif;padding:40px;background:#fff;color:#000;} .doc{border:1px solid #ccc;padding:20px;margin-bottom:20px;border-radius:8px} .t{font-size:12px;background:#eee;padding:4px 8px;border-radius:4px;margin:2px;display:inline-block;border:1px solid #ddd;}</style></head><body><h1>Report Forense: ${escapeHTML(state.currentWorkspace)}</h1><p>Generato il: ${new Date().toLocaleString()}</p><hr>`;
   getActiveDocs().forEach(d => {
     let tags = d.entities.map(e => `<span class="t"><b>${escapeHTML(e.type)}:</b> ${escapeHTML(e.val)}</span>`).join('');
     h += `<div class="doc"><h3>📄 ${escapeHTML(d.title)}</h3><div style="margin-bottom:12px;">${tags}</div><div style="white-space:pre-wrap;font-size:13px;color:#222;padding:12px;background:#f9f9f9;border:1px solid #eee;">${escapeHTML(d.content)}</div><div style="font-family:monospace;font-size:11px;color:#888;margin-top:12px;">SHA-256: ${d.hash}</div></div>`;
