@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#000000">
 <title>VaultAI - Enterprise Forensic Enclave</title>
 
-<!-- Librerie Esterne (PDF e OCR) - Caricate una tantum in cache -->
+<!-- Librerie Esterne (PDF e OCR) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
@@ -56,16 +56,16 @@
   .tl-date { font-size: 13px; font-weight: 800; color: var(--accent); margin-bottom: 4px; letter-spacing: 1px; }
   .tl-content { background: #0a0a0a; border: 1px solid var(--border-light); padding: 12px; border-radius: 8px; font-size: 13px; color: #ccc; }
   
-  .doc-record { border: 1px solid var(--border-light); border-radius: 10px; background: #0a0a0a; margin-bottom: 16px; overflow: hidden; }
+  .doc-record { border: 1px solid var(--border-light); border-radius: 10px; background: #0a0a0a; margin-bottom: 16px; overflow: hidden; position: relative; }
   .doc-header { background: #141414; padding: 12px 16px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; }
   .doc-title { font-weight: 600; font-size: 14px; color: #fff; }
+  .doc-actions { display: flex; gap: 8px; align-items: center; }
   .doc-hash { font-family: 'Courier New', monospace; font-size: 11px; color: var(--text-muted); }
   .doc-body { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
   
   .entity-chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip { padding: 4px 10px; border-radius: 6px; font-size: 12px; background: #1a1a1a; border: 1px solid #333; display: inline-flex; align-items: center; font-weight: 500; }
   
-  /* Colori Categorie */
   .c-email { color: #2196f3; border-color: rgba(33,150,243,0.3); background: rgba(33,150,243,0.05); }
   .c-iban { color: #ffeb3b; border-color: rgba(255,235,59,0.3); background: rgba(255,235,59,0.05); }
   .c-importo { color: #00e676; border-color: rgba(0,230,118,0.3); background: rgba(0,230,118,0.05); }
@@ -75,7 +75,6 @@
   .c-data { color: #795548; border-color: rgba(121,85,72,0.3); background: rgba(121,85,72,0.05); }
   .c-custom { color: #b388ff; border-color: rgba(179,136,255,0.3); background: rgba(179,136,255,0.05); }
   
-  /* Text Marker Highlighting */
   mark { background: transparent; padding: 0 4px; border-radius: 4px; border: 1px solid transparent; }
   mark.c-email { background: rgba(33,150,243,0.2); color: #64b5f6; border-color: rgba(33,150,243,0.4); }
   mark.c-iban { background: rgba(255,235,59,0.2); color: #fff59d; border-color: rgba(255,235,59,0.4); }
@@ -93,7 +92,6 @@
   .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #0a0a0a; border: 1px solid #1a1a1a; margin-bottom: 6px; border-radius: 6px; }
   .audit-log { font-family: 'Courier New', monospace; font-size: 12px; background: #050505; padding: 16px; border-radius: 8px; border: 1px solid #1a1a1a; max-height: 300px; overflow-y: auto; }
   
-  /* Canvas e Split Screen */
   .graph-container { display: flex; gap: 16px; height: 600px; width: 100%; transition: 0.3s; }
   .canvas-wrapper { position: relative; flex: 1; background: #050505; border-radius: 12px; border: 1px solid var(--border-light); overflow: hidden; transition: 0.3s; }
   canvas { width: 100%; height: 100%; touch-action: none; cursor: grab; display: block; }
@@ -104,6 +102,7 @@
   #graphSidePanel { display: none; width: 350px; background: #0a0a0a; border: 1px solid var(--border-light); border-radius: 12px; padding: 16px; overflow-y: auto; flex-shrink: 0; }
   
   #lockScreen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; z-index: 9999; }
+  
   #customModalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 10000; }
   .modal-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 100%; max-width: 400px; text-align: center; }
   .modal-title { color: var(--accent); margin-top: 0; font-size: 16px; }
@@ -119,7 +118,6 @@
     <p style="color:var(--success); font-size: 11px; margin-bottom: 30px; letter-spacing: 1px; font-weight:bold;">ENTERPRISE FORENSIC EDITION</p>
     
     <div class="card" style="padding: 24px;">
-      
       <!-- FASE 1: PRIMO AVVIO (SETUP) -->
       <div id="setupModeUI" style="display:none;">
         <h3 style="justify-content: center; color: var(--warning); margin-bottom: 16px;">Configurazione Iniziale</h3>
@@ -140,21 +138,20 @@
         
         <button class="btn-primary" onclick="attemptLogin()" style="width: 100%; margin-top: 10px;">SBLOCCA VAULT</button>
       </div>
-
     </div>
   </div>
 </div>
 
-<!-- MODAL OVERLAY -->
+<!-- MODAL OVERLAY UNIFICATO -->
 <div id="customModalOverlay">
   <div class="modal-box">
     <h3 id="modalTitle" class="modal-title">Avviso</h3>
     <div id="modalMsg" class="modal-msg">Messaggio</div>
     <div id="modalInputContainer" style="display:none;">
-      <input type="password" id="modalInput" style="text-align:center;">
+      <input type="text" id="modalInput" style="text-align:center;" onkeypress="if(event.key==='Enter') submitModal()">
     </div>
     <div class="btn-group" id="modalBtns">
-      <button class="btn-primary" onclick="closeModal()">OK</button>
+      <!-- Inserito dinamicamente -->
     </div>
   </div>
 </div>
@@ -167,10 +164,13 @@
 </header>
 
 <div class="container">
+  
+  <!-- WORKSPACE SELECTOR CON FUNZIONE ELIMINA -->
   <div class="workspace-selector" id="workspaceSelectorContainer" style="display:none;">
     <span style="font-size:13px; font-weight:bold; color:var(--accent);">📁 FASCICOLO:</span>
     <select id="workspaceSelect" onchange="changeWorkspace()"></select>
-    <button class="btn-secondary" style="min-width:auto; padding:12px;" onclick="promptNewWorkspace()">+ NUOVO</button>
+    <button class="btn-secondary" style="min-width:auto; padding:12px;" onclick="promptNewWorkspace()" title="Nuovo Fascicolo">+ NUOVO</button>
+    <button class="btn-danger" style="min-width:auto; padding:12px;" onclick="deleteCurrentWorkspace()" title="Elimina Fascicolo">🗑️</button>
   </div>
 
   <div class="tabs" id="mainTabs" style="display:none;">
@@ -218,7 +218,10 @@
     <div class="card" style="padding: 10px;">
       <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 10px 10px 10px;">
         <h3 style="margin:0;">🕸️ Link Analysis </h3>
-        <button class="btn-secondary" style="width:auto; padding:4px 10px; font-size:11px;" onclick="initGraph()">Ricalcola Layout</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-secondary" style="width:auto; padding:4px 10px; font-size:11px;" onclick="exportGraph()">📷 Esporta PNG</button>
+          <button class="btn-secondary" style="width:auto; padding:4px 10px; font-size:11px;" onclick="initGraph()">Ricalcola Layout</button>
+        </div>
       </div>
       
       <!-- CONTENITORE SPLIT-SCREEN -->
@@ -233,10 +236,9 @@
         </div>
         
         <div id="graphSidePanel">
-           <!-- Popolato dinamicamente da JS al click su un nodo -->
+           <!-- Popolato dinamicamente -->
         </div>
       </div>
-
     </div>
   </div>
 
@@ -326,7 +328,6 @@ window.onload = async () => {
     db = await initDB();
     await checkBootState();
   } catch(e) {
-    console.error("Errore IndexedDB", e);
     openModal("Errore Critico", "Il browser non supporta il database locale.");
   }
 };
@@ -351,7 +352,7 @@ async function checkBootState() {
   });
 }
 
-// --- FUNZIONI DI CRITTOGRAFIA E HASH ---
+// --- FUNZIONI DI CRITTOGRAFIA ---
 function fallbackSHA256(str) { return Array.from(new TextEncoder().encode(str)).reduce((acc, val) => acc + val.toString(16), "").substring(0,64); }
 async function computeHash(text) {
   if (window.crypto && crypto.subtle) {
@@ -403,8 +404,15 @@ async function attemptLogin() {
         const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: record.iv }, key, record.data);
         const payload = JSON.parse(new TextDecoder().decode(decrypted));
         
-        masterKey = key; state = payload.state; customRules = {};
-        payload.rules.forEach(r => { customRules[r.id] = { regex: new RegExp(r.r, 'g'), class:'c-custom', label:r.l }; });
+        masterKey = key; 
+        state = payload.state;
+        
+        // Retrocompatibilità per vecchi DB
+        if (!state.workspaces) state.workspaces = ['Indagine_Principale'];
+        if (!state.currentWorkspace) state.currentWorkspace = state.workspaces[0];
+        
+        customRules = {};
+        if (payload.rules) payload.rules.forEach(r => { customRules[r.id] = { regex: new RegExp(r.r, 'g'), class:'c-custom', label:r.l }; });
         
         document.getElementById('loginPwd').value = '';
         proceedToUnlock();
@@ -447,18 +455,31 @@ function lockSystem() {
   ['docsList', 'timelineContainer', 'statsContainer', 'auditLog', 'rulesList'].forEach(id => document.getElementById(id).innerHTML = '');
 }
 
-// --- MODALI E LOGGING ---
+// --- MODALI UNIFICATI (Risolto Bug Invio e Conferme) ---
 let modalCallback = null;
-function openModal(title, msg, isPrompt = false, callback = null, isInputPassword = false) {
-  document.getElementById('modalTitle').innerText = title; document.getElementById('modalMsg').innerText = msg;
-  const inputContainer = document.getElementById('modalInputContainer'); const inp = document.getElementById('modalInput');
-  if (isPrompt) { inputContainer.style.display = 'block'; inp.type = isInputPassword ? 'password' : 'text'; inp.value = ''; } 
-  else { inputContainer.style.display = 'none'; }
+function openModal(title, msg, type = 'alert', callback = null) {
+  // type options: 'alert', 'prompt', 'password', 'confirm'
+  document.getElementById('modalTitle').innerText = title; 
+  document.getElementById('modalMsg').innerText = msg;
+  const inputContainer = document.getElementById('modalInputContainer'); 
+  const inp = document.getElementById('modalInput');
+  
+  if (type === 'prompt' || type === 'password') { 
+    inputContainer.style.display = 'block'; 
+    inp.type = (type === 'password') ? 'password' : 'text'; 
+    inp.value = ''; 
+  } else { 
+    inputContainer.style.display = 'none'; 
+  }
+  
   modalCallback = callback;
+  
   let btns = `<button class="btn-primary" onclick="submitModal()">OK</button>`;
-  if(isPrompt) btns = `<button class="btn-secondary" onclick="closeModal()">Annulla</button>` + btns;
+  if(type !== 'alert') btns = `<button class="btn-secondary" onclick="closeModal()">Annulla</button>` + btns;
+  
   document.getElementById('modalBtns').innerHTML = btns;
-  document.getElementById('customModalOverlay').style.display = 'flex'; if(isPrompt) setTimeout(()=>inp.focus(), 50);
+  document.getElementById('customModalOverlay').style.display = 'flex'; 
+  if(type === 'prompt' || type === 'password') setTimeout(()=>inp.focus(), 50);
 }
 function closeModal() { document.getElementById('customModalOverlay').style.display = 'none'; modalCallback = null; }
 function submitModal() { const val = document.getElementById('modalInput').value; closeModal(); if(modalCallback) modalCallback(val); }
@@ -472,20 +493,51 @@ async function logAction(actionName) {
 function resetInactivity() { clearTimeout(inactivityTimer); if(masterKey) inactivityTimer = setTimeout(lockSystem, 15 * 60 * 1000); }
 window.addEventListener('mousemove', resetInactivity); window.addEventListener('keypress', resetInactivity);
 
-// --- UTILITA E RENDER ---
+// --- GESTIONE WORKSPACE ---
 function escapeHTML(str) { return !str ? "" : str.toString().replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])); }
-function highlightEntities(text, entities) {
-  let escaped = escapeHTML(text); const sorted = [...entities].sort((a,b) => b.val.length - a.val.length); const map = {};
-  sorted.forEach((e, i) => {
-    const key = `__MARKER_${i}__`; map[key] = `<mark class="${e.class}">${escapeHTML(e.val)}</mark>`;
-    escaped = escaped.replace(new RegExp(escapeHTML(e.val).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), key);
-  });
-  Object.keys(map).forEach(key => { escaped = escaped.split(key).join(map[key]); }); return escaped;
-}
 function getActiveDocs() { return state.docs.filter(d => d.workspace === state.currentWorkspace); }
 function renderWorkspaces() { document.getElementById('workspaceSelect').innerHTML = state.workspaces.map(w => `<option value="${escapeHTML(w)}" ${w===state.currentWorkspace?'selected':''}>${escapeHTML(w)}</option>`).join(''); }
-function changeWorkspace() { state.currentWorkspace = document.getElementById('workspaceSelect').value; renderAllViews(); document.getElementById('graphSidePanel').style.display='none'; }
-function promptNewWorkspace() { openModal("Nuovo", "Nome fascicolo:", true, (n) => { if(n&&!state.workspaces.includes(n)){ state.workspaces.push(n); state.currentWorkspace = n; renderWorkspaces(); renderAllViews(); logAction("CREATED_WORKSPACE: "+n); } }); }
+
+function changeWorkspace() { 
+  state.currentWorkspace = document.getElementById('workspaceSelect').value; 
+  saveEncryptedState(); 
+  renderAllViews(); 
+  document.getElementById('graphSidePanel').style.display='none'; 
+}
+
+function promptNewWorkspace() { 
+  openModal("Nuovo", "Digita il nome del nuovo fascicolo:", 'prompt', (n) => { 
+    if(n && !state.workspaces.includes(n)){ 
+      state.workspaces.push(n); 
+      state.currentWorkspace = n; 
+      renderWorkspaces(); 
+      renderAllViews(); 
+      logAction("CREATED_WORKSPACE: "+n); 
+    } 
+  }); 
+}
+
+function deleteCurrentWorkspace() {
+  if (state.workspaces.length <= 1) return openModal("Errore", "Impossibile eliminare l'unico fascicolo rimasto.");
+  openModal("Conferma Distruzione", `Digita "ELIMINA" per distruggere il fascicolo '${state.currentWorkspace}' e i suoi reperti.`, 'prompt', (val) => {
+    if(val === "ELIMINA") {
+      state.docs = state.docs.filter(d => d.workspace !== state.currentWorkspace);
+      state.workspaces = state.workspaces.filter(w => w !== state.currentWorkspace);
+      state.currentWorkspace = state.workspaces[0];
+      logAction("DELETED_WORKSPACE");
+      renderWorkspaces();
+      renderAllViews();
+    }
+  });
+}
+
+function deleteDoc(id) {
+  openModal("Elimina Reperto", "Vuoi davvero eliminare definitivamente questo reperto?", 'confirm', () => {
+    state.docs = state.docs.filter(d => d.id !== id);
+    logAction("DELETED_DOC");
+    renderAllViews();
+  });
+}
 
 // --- REGOLE NER E DOCS (CON OCR) ---
 function addCustomRule() {
@@ -499,10 +551,20 @@ function addCustomRule() {
 }
 function removeRule(id) { delete customRules[id]; state.docs.forEach(d => d.entities = extractEntities(d.content)); saveEncryptedState(); renderRulesList(); renderAllViews(); }
 function renderRulesList() { document.getElementById('rulesList').innerHTML = Object.entries(customRules).map(([id, rule]) => `<div style="display:flex; justify-content:space-between; align-items:center; background:#111; padding:12px; border-radius:8px; border:1px solid #222;"><div><strong style="color:#b388ff">${escapeHTML(rule.label)}</strong> <br><span style="font-size:11px; font-family:monospace; color:#666;">${escapeHTML(rule.regex.toString())}</span></div><button class="btn-danger" style="width:auto; padding:6px 12px; font-size:11px;" onclick="removeRule('${id}')">Elimina</button></div>`).join(''); }
+
 function extractEntities(text) {
   let entities = []; const allRules = { ...coreRules, ...customRules };
   for (let [k, r] of Object.entries(allRules)) { (text.match(r.regex)||[]).forEach(v => entities.push({ id:k, type:r.label, val:v.trim(), class:r.class })); }
   return entities.filter((v,i,a)=>a.findIndex(t=>(t.type===v.type && t.val===v.val))===i);
+}
+
+function highlightEntities(text, entities) {
+  let escaped = escapeHTML(text); const sorted = [...entities].sort((a,b) => b.val.length - a.val.length); const map = {};
+  sorted.forEach((e, i) => {
+    const key = `__MARKER_${i}__`; map[key] = `<mark class="${e.class}">${escapeHTML(e.val)}</mark>`;
+    escaped = escaped.replace(new RegExp(escapeHTML(e.val).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), key);
+  });
+  Object.keys(map).forEach(key => { escaped = escaped.split(key).join(map[key]); }); return escaped;
 }
 
 function cleanExtractedText(text) { return text.replace(/\b(?:obj|endobj|stream|endstream|xref|trailer|startxref|\%PDF-\d\.\d)\b/g, '').replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, '').replace(/\s{2,}/g, ' ').trim(); }
@@ -517,7 +579,7 @@ function redactInput() {
   document.getElementById('docContent').value = t;
 }
 
-// GESTIONE UPLOAD CON OCR TESSERACT INTEGATO
+// UPLOAD MULTIMEDIALE CON OCR
 async function handleFileUpload(event) {
   const files = event.target.files; if (!files || files.length === 0) return;
   const btn = document.getElementById('uploadBtn'); const og = btn.innerHTML; 
@@ -526,17 +588,14 @@ async function handleFileUpload(event) {
     try { 
       let txt = "";
       if (f.type.startsWith('image/')) {
-        // OCR IMAGE PROCESSING
         btn.innerHTML = `⏳ ESTRAZIONE TESTO DA IMMAGINE (${f.name})...`; btn.disabled = true;
         const { data: { text } } = await Tesseract.recognize(f, 'ita', { logger: m => console.log(m) });
         txt = text;
-      } 
-      else if (f.type === 'application/pdf' && window['pdfjs-dist/build/pdf']) {
+      } else if (f.type === 'application/pdf' && window['pdfjs-dist/build/pdf']) {
         btn.innerHTML = `⏳ PARSING PDF (${f.name})...`; btn.disabled = true;
         const pdf = await window['pdfjs-dist/build/pdf'].getDocument(new Uint8Array(await f.arrayBuffer())).promise;
         for (let i = 1; i <= pdf.numPages; i++) { const page = await pdf.getPage(i); txt += (await page.getTextContent()).items.map(it => it.str).join(' ') + "\n"; }
-      } 
-      else {
+      } else {
         btn.innerHTML = `⏳ LETTURA FILE (${f.name})...`; btn.disabled = true;
         const bytes = new Uint8Array(await f.arrayBuffer()); let str = "";
         for(let i=0; i<bytes.length; i++) { let c=bytes[i]; if((c>=32 && c<=126) || c===10) str+=String.fromCharCode(c); else { if(str.length>4) txt+=str+" "; str=""; } }
@@ -552,13 +611,13 @@ function renderAllViews() { renderDocs(); renderTimeline(); renderStats(); if(do
 function toggleTextExpand(id) { const el = document.getElementById(id); el.classList.toggle('expanded'); const fade = el.querySelector('.text-box-fade'); if(fade) fade.style.display = el.classList.contains('expanded') ? 'none' : 'flex'; }
 function renderDocs() {
   const q = document.getElementById('searchQuery').value.toLowerCase(); const list = document.getElementById('docsList'); list.innerHTML = ''; const docs = getActiveDocs();
-  if (docs.length === 0) return list.innerHTML = `<div style="text-align:center; padding:20px; color:#555; font-size:13px;">Nessun documento.</div>`;
+  if (docs.length === 0) return list.innerHTML = `<div style="text-align:center; padding:20px; color:#555; font-size:13px;">Nessun documento in questo fascicolo.</div>`;
   docs.forEach((doc) => {
     if(q && !doc.title.toLowerCase().includes(q) && !doc.content.toLowerCase().includes(q) && !doc.entities.some(e=>e.val.toLowerCase().includes(q)) && !doc.hash.toLowerCase().includes(q)) return;
     const grouped = {}; doc.entities.forEach(e => { if(!grouped[e.type]) grouped[e.type] = { class: e.class, items: [] }; grouped[e.type].items.push(e.val); });
     let html = ''; Object.entries(grouped).forEach(([type, data]) => { html += `<div style="margin-bottom: 8px;"><span style="font-size:11px; color:#888; text-transform:uppercase; margin-right:8px;">${escapeHTML(type)}:</span><div class="entity-chips" style="display:inline-flex;">${data.items.map(val => `<span class="chip ${data.class}">${escapeHTML(val)}</span>`).join('')}</div></div>`; });
     const needsFade = doc.content.length > 400;
-    list.innerHTML += `<div class="doc-record"><div class="doc-header"><div class="doc-title">📄 ${escapeHTML(doc.title)}</div><div class="doc-hash">SHA-256: ${doc.hash}</div></div><div class="doc-body"><div style="background:#111; padding:12px; border-radius:6px; border:1px solid #222;">${html||'<span style="color:#555;font-size:12px;">Nessuna entità identificata.</span>'}</div><div id="txt_${doc.id}" class="text-box" ${needsFade ? `onclick="toggleTextExpand('txt_${doc.id}')"` : ''}>${highlightEntities(doc.content, doc.entities)}${needsFade ? `<div class="text-box-fade">Mostra tutto</div>` : ''}</div></div></div>`;
+    list.innerHTML += `<div class="doc-record"><div class="doc-header"><div class="doc-title">📄 ${escapeHTML(doc.title)}</div><div class="doc-actions"><span class="doc-hash">SHA-256: ${doc.hash}</span><button class="btn-danger" style="padding:4px 8px; min-width:auto; font-size:10px;" onclick="deleteDoc('${doc.id}')">Elimina</button></div></div><div class="doc-body"><div style="background:#111; padding:12px; border-radius:6px; border:1px solid #222;">${html||'<span style="color:#555;font-size:12px;">Nessuna entità identificata.</span>'}</div><div id="txt_${doc.id}" class="text-box" ${needsFade ? `onclick="toggleTextExpand('txt_${doc.id}')"` : ''}>${highlightEntities(doc.content, doc.entities)}${needsFade ? `<div class="text-box-fade">Mostra tutto</div>` : ''}</div></div></div>`;
   });
 }
 function renderTimeline() {
@@ -577,6 +636,7 @@ function renderStats() {
 
 // --- GRAFO E SPLIT-SCREEN ---
 let graphNodes = [], graphEdges = [], animFrame = null, dragNode = null, focusNode = null, viewTransform = { x: 0, y: 0, k: 1 }, isDraggingBackground = false, lastMouse = {x:0, y:0};
+
 function initGraph() {
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
   document.getElementById('graphSidePanel').style.display = 'none';
@@ -588,6 +648,13 @@ function initGraph() {
 }
 function zoomGraph(factor) { const cvs = document.getElementById('graphCanvas'); const cx = cvs.width / 2, cy = cvs.height / 2; viewTransform.x = cx - (cx - viewTransform.x) * factor; viewTransform.y = cy - (cy - viewTransform.y) * factor; viewTransform.k *= factor; updateGraph(true); }
 function resetGraphView() { viewTransform = {x:0, y:0, k:1}; focusNode=null; document.getElementById('graphSidePanel').style.display = 'none'; updateGraph(true); }
+function exportGraph() {
+  const cvs = document.getElementById('graphCanvas');
+  const a = document.createElement('a');
+  a.href = cvs.toDataURL('image/png');
+  a.download = `Grafo_Relazioni_${state.currentWorkspace}.png`;
+  a.click();
+}
 
 function showSidePanel(node) {
   const panel = document.getElementById('graphSidePanel');
@@ -598,11 +665,11 @@ function showSidePanel(node) {
       <div style="font-size:12px; line-height:1.6; color:#ccc; max-height:450px; overflow-y:auto; border-top:1px solid #333; padding-top:12px;">${highlightEntities(doc.content, doc.entities)}</div>
       <button class='btn-secondary' style='margin-top:16px; width:100%' onclick='document.getElementById("graphSidePanel").style.display="none"'>Chiudi Dettagli</button>`;
   } else {
-    let linkedDocs = state.docs.filter(d => d.entities.some(e => e.val === node.label));
+    let linkedDocs = state.docs.filter(d => d.entities.some(e => e.val === node.label && d.workspace === state.currentWorkspace));
     let docsHtml = linkedDocs.map(d => `<div style="padding:10px; border:1px solid #333; margin-bottom:8px; border-radius:6px; font-size:12px; background:#111;">📄 <b>${escapeHTML(d.title)}</b><br><span style="color:#666;font-size:10px;">SHA: ${d.hash}</span></div>`).join('');
     panel.innerHTML = `<h4 style="font-size:16px;"><span class="chip ${node.class}">${escapeHTML(node.type)}</span></h4>
       <div style="font-size:16px; font-weight:bold; margin-bottom: 16px; word-break: break-all;">${escapeHTML(node.label)}</div>
-      <p style="font-size:12px; color:#888; margin-bottom:12px; border-bottom:1px solid #333; padding-bottom:8px;">Presente in ${linkedDocs.length} documenti correlati:</p>
+      <p style="font-size:12px; color:#888; margin-bottom:12px; border-bottom:1px solid #333; padding-bottom:8px;">Presente in ${linkedDocs.length} documenti:</p>
       <div style="max-height:400px; overflow-y:auto;">${docsHtml}</div>
       <button class='btn-secondary' style='margin-top:16px; width:100%' onclick='document.getElementById("graphSidePanel").style.display="none"'>Chiudi Dettagli</button>`;
   }
@@ -613,6 +680,7 @@ function updateGraph(forceRender = false) {
   graphNodes.forEach(n1 => { graphNodes.forEach(n2 => { if(n1===n2) return; let dx=n2.x-n1.x, dy=n2.y-n1.y, dist=Math.sqrt(dx*dx+dy*dy)||1; if(dist<200) { let force=-400/(dist*dist); n1.vx+=(dx/dist)*force; n1.vy+=(dy/dist)*force; } }); n1.vx+=(400-n1.x)*0.001; n1.vy+=(400-n1.y)*0.001; });
   graphEdges.forEach(e => { let dx=e.target.x-e.source.x, dy=e.target.y-e.source.y, dist=Math.sqrt(dx*dx+dy*dy)||1; let force=(dist-80)*0.03; e.source.vx+=(dx/dist)*force; e.source.vy+=(dy/dist)*force; e.target.vx-=(dx/dist)*force; e.target.vy-=(dy/dist)*force; });
   graphNodes.forEach(n => { if(n!==dragNode) { n.x+=n.vx; n.y+=n.vy; } n.vx*=0.85; n.vy*=0.85; kineticEnergy += Math.abs(n.vx) + Math.abs(n.vy); });
+  
   ctx.save(); ctx.clearRect(0,0, cvs.width, cvs.height); ctx.translate(viewTransform.x, viewTransform.y); ctx.scale(viewTransform.k, viewTransform.k);
   ctx.lineWidth = 1.5 / viewTransform.k; graphEdges.forEach(e => { let active = true; if(focusNode && focusNode !== e.source && focusNode !== e.target) active = false; ctx.strokeStyle = active ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.05)'; ctx.beginPath(); ctx.moveTo(e.source.x, e.source.y); ctx.lineTo(e.target.x, e.target.y); ctx.stroke(); });
   graphNodes.forEach(n => {
@@ -620,10 +688,11 @@ function updateGraph(forceRender = false) {
     if(n.type==='doc') ctx.fillStyle='#00e5ff'; else if(n.class==='c-email') ctx.fillStyle='#2196f3'; else if(n.class==='c-iban') ctx.fillStyle='#ffeb3b'; else if(n.class==='c-importo') ctx.fillStyle='#00e676'; else if(n.class==='c-cf') ctx.fillStyle='#e91e63'; else if(n.class==='c-targa') ctx.fillStyle='#00bcd4'; else if(n.class==='c-tel') ctx.fillStyle='#9c27b0'; else if(n.class==='c-data') ctx.fillStyle='#795548'; else ctx.fillStyle='#b388ff';
     if(n === focusNode) { ctx.lineWidth = 3/viewTransform.k; ctx.strokeStyle = '#fff'; ctx.stroke(); } ctx.fill(); ctx.fillStyle='#fff'; ctx.font = `${11/viewTransform.k}px sans-serif`; ctx.fillText(n.label, n.x+18, n.y+4); ctx.globalAlpha = 1;
   }); ctx.restore();
+  
   if(kineticEnergy > 1.5 || dragNode || isDraggingBackground || forceRender) { animFrame = requestAnimationFrame(() => updateGraph()); } else { animFrame = null; }
 }
-function getPtrLogico(e) { const r = document.getElementById('graphCanvas').getBoundingClientRect(); const dpr = window.devicePixelRatio || 1; const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left; const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top; return { rawX: x, rawY: y, logX: (x * dpr - viewTransform.x) / viewTransform.k, logY: (y * dpr - viewTransform.y) / viewTransform.k }; }
 
+function getPtrLogico(e) { const r = document.getElementById('graphCanvas').getBoundingClientRect(); const dpr = window.devicePixelRatio || 1; const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left; const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top; return { rawX: x, rawY: y, logX: (x * dpr - viewTransform.x) / viewTransform.k, logY: (y * dpr - viewTransform.y) / viewTransform.k }; }
 let mouseDownPos = {x:0, y:0};
 document.getElementById('graphCanvas').addEventListener('mousedown', e => { 
   const p = getPtrLogico(e); mouseDownPos = {x: p.rawX, y: p.rawY};
@@ -633,11 +702,7 @@ document.getElementById('graphCanvas').addEventListener('mousedown', e => {
 });
 window.addEventListener('mousemove', e => { const p = getPtrLogico(e); if(dragNode) { dragNode.x = p.logX; dragNode.y = p.logY; dragNode.vx=0; dragNode.vy=0; if(!animFrame) updateGraph(true); } else if(isDraggingBackground) { const dpr = window.devicePixelRatio || 1; viewTransform.x += (p.rawX - lastMouse.x) * dpr; viewTransform.y += (p.rawY - lastMouse.y) * dpr; lastMouse = {x: p.rawX, y: p.rawY}; if(!animFrame) updateGraph(true); }});
 window.addEventListener('mouseup', e => { 
-  if(dragNode) {
-    const p = getPtrLogico(e);
-    // Se il mouse si è mosso pochissimo, è considerato un click (apre pannello)
-    if(Math.hypot(p.rawX - mouseDownPos.x, p.rawY - mouseDownPos.y) < 5) showSidePanel(dragNode);
-  }
+  if(dragNode) { const p = getPtrLogico(e); if(Math.hypot(p.rawX - mouseDownPos.x, p.rawY - mouseDownPos.y) < 5) showSidePanel(dragNode); }
   dragNode = null; isDraggingBackground = false; 
 });
 document.getElementById('graphCanvas').addEventListener('wheel', e => { e.preventDefault(); zoomGraph(e.deltaY < 0 ? 1.1 : 0.9); });
@@ -648,7 +713,7 @@ function renderAudit() { document.getElementById('auditLog').innerHTML = state.a
 async function verifyIntegrity() { for(let i=0; i<state.audit.length; i++) { if((await computeHash(state.audit[i]._raw)).substring(0,16) !== state.audit[i].hash || (i>0 && state.audit[i].prev !== state.audit[i-1].hash)) return openModal("ALLARME", "Manomissione rilevata"); } openModal("Verifica Superata", "Catena integra."); }
 function exportCSV() { let csv = "Entita,Valore,Occorrenze\n"; let counts = {}; getActiveDocs().forEach(d => d.entities.forEach(e => { let key = e.type + "|||" + e.val; counts[key] = (counts[key] || 0) + 1; })); Object.entries(counts).sort((a,b) => b[1] - a[1]).forEach(([k, c]) => { const p = k.split("|||"); csv += `"${p[0]}","${p[1]}",${c}\n`; }); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv"})); a.download = `Export_Statistiche_${state.currentWorkspace}.csv`; a.click(); }
 async function exportVaultFile() { if(!masterKey || !masterSalt) return; const payload = JSON.stringify({ state: state, rules: Object.keys(customRules).map(k=>({id:k, r:customRules[k].regex.source, l:customRules[k].label})) }); const iv = crypto.getRandomValues(new Uint8Array(12)); const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, masterKey, new TextEncoder().encode(payload)); const vaultData = JSON.stringify({ s: Array.from(masterSalt), i: Array.from(iv), c: Array.from(new Uint8Array(encrypted)) }); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([vaultData], {type:"application/json"})); a.download = `Backup_${state.currentWorkspace}_${Date.now()}.vault`; a.click(); logAction("EXPORT"); }
-function importVaultFile(event) { const file = event.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = async (e) => { try { const vault = JSON.parse(e.target.result); openModal("Importa", "Password file .vault:", true, async (pwd) => { if(!pwd) return; try { const importedSalt = new Uint8Array(vault.s); const importKey = await deriveKey(pwd, importedSalt); const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(vault.i) }, importKey, new Uint8Array(vault.c)); const payload = JSON.parse(new TextDecoder().decode(decrypted)); state = payload.state; customRules = {}; payload.rules.forEach(r => { customRules[r.id] = { regex: new RegExp(r.r, 'g'), class:'c-custom', label:r.l }; }); await saveEncryptedState(); renderWorkspaces(); renderRulesList(); renderAllViews(); openModal("Successo", "Ripristinato."); } catch(err) { openModal("Errore", "Password errata."); } }, true); } catch(err) { openModal("Errore", "File non valido."); } }; reader.readAsText(file); event.target.value = ""; }
+function importVaultFile(event) { const file = event.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = async (e) => { try { const vault = JSON.parse(e.target.result); openModal("Importa", "Password file .vault:", 'password', async (pwd) => { if(!pwd) return; try { const importedSalt = new Uint8Array(vault.s); const importKey = await deriveKey(pwd, importedSalt); const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(vault.i) }, importKey, new Uint8Array(vault.c)); const payload = JSON.parse(new TextDecoder().decode(decrypted)); state = payload.state; if (!state.workspaces) state.workspaces = ['Indagine_Principale']; if (!state.currentWorkspace) state.currentWorkspace = state.workspaces[0]; customRules = {}; payload.rules.forEach(r => { customRules[r.id] = { regex: new RegExp(r.r, 'g'), class:'c-custom', label:r.l }; }); await saveEncryptedState(); renderWorkspaces(); renderRulesList(); renderAllViews(); openModal("Successo", "Ripristinato con successo."); } catch(err) { openModal("Errore", "Password errata."); } }); } catch(err) { openModal("Errore", "File non valido."); } }; reader.readAsText(file); event.target.value = ""; }
 async function exportHTMLBundle() { await logAction("REPORT"); let h = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>VaultAI Report - ${escapeHTML(state.currentWorkspace)}</title><style>body{font-family:sans-serif;padding:40px;background:#fff;color:#000;} .doc{border:1px solid #ccc;padding:20px;margin-bottom:20px;border-radius:8px} .t{font-size:12px;background:#eee;padding:4px 8px;border-radius:4px;margin:2px;display:inline-block;border:1px solid #ddd;}</style></head><body><h1>Report Forense: ${escapeHTML(state.currentWorkspace)}</h1><p>Generato il: ${new Date().toLocaleString()}</p><hr>`; getActiveDocs().forEach(d => { let tags = d.entities.map(e => `<span class="t"><b>${escapeHTML(e.type)}:</b> ${escapeHTML(e.val)}</span>`).join(''); h += `<div class="doc"><h3>📄 ${escapeHTML(d.title)}</h3><div style="margin-bottom:12px;">${tags}</div><div style="white-space:pre-wrap;font-size:13px;color:#222;padding:12px;background:#f9f9f9;border:1px solid #eee;">${escapeHTML(d.content)}</div><div style="font-family:monospace;font-size:11px;color:#888;margin-top:12px;">SHA-256: ${d.hash}</div></div>`; }); const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([h],{type:"text/html"})); a.download=`Report_${state.currentWorkspace}.html`; a.click(); }
 </script>
 </body>
