@@ -6,7 +6,9 @@
 <meta name="theme-color" content="#000000">
 <title>VaultAI - Enterprise Forensic Enclave</title>
 
+<!-- Librerie Esterne (PDF e OCR) - Caricate una tantum in cache -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
   :root {
@@ -24,7 +26,7 @@
   
   .container { padding: 16px; max-width: 1200px; margin: auto; }
   .card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); transition: 0.2s ease; position: relative; }
-  h2, h3 { margin: 0 0 12px 0; color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; gap: 8px; }
+  h2, h3, h4 { margin: 0 0 12px 0; color: var(--accent); font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; gap: 8px; }
   
   input[type="text"], input[type="password"], textarea, select { width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 8px; border: 1px solid var(--border-light); background: #080808; color: #fff; font-size: 14px; transition: 0.2s; }
   textarea { resize: vertical; min-height: 100px; line-height: 1.5; }
@@ -63,6 +65,7 @@
   .entity-chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip { padding: 4px 10px; border-radius: 6px; font-size: 12px; background: #1a1a1a; border: 1px solid #333; display: inline-flex; align-items: center; font-weight: 500; }
   
+  /* Colori Categorie */
   .c-email { color: #2196f3; border-color: rgba(33,150,243,0.3); background: rgba(33,150,243,0.05); }
   .c-iban { color: #ffeb3b; border-color: rgba(255,235,59,0.3); background: rgba(255,235,59,0.05); }
   .c-importo { color: #00e676; border-color: rgba(0,230,118,0.3); background: rgba(0,230,118,0.05); }
@@ -72,6 +75,7 @@
   .c-data { color: #795548; border-color: rgba(121,85,72,0.3); background: rgba(121,85,72,0.05); }
   .c-custom { color: #b388ff; border-color: rgba(179,136,255,0.3); background: rgba(179,136,255,0.05); }
   
+  /* Text Marker Highlighting */
   mark { background: transparent; padding: 0 4px; border-radius: 4px; border: 1px solid transparent; }
   mark.c-email { background: rgba(33,150,243,0.2); color: #64b5f6; border-color: rgba(33,150,243,0.4); }
   mark.c-iban { background: rgba(255,235,59,0.2); color: #fff59d; border-color: rgba(255,235,59,0.4); }
@@ -87,17 +91,19 @@
   .text-box-fade { position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: linear-gradient(transparent, #050505 80%); cursor: pointer; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 8px; font-size: 11px; color: var(--accent); font-weight: bold; }
   
   .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #0a0a0a; border: 1px solid #1a1a1a; margin-bottom: 6px; border-radius: 6px; }
-  
   .audit-log { font-family: 'Courier New', monospace; font-size: 12px; background: #050505; padding: 16px; border-radius: 8px; border: 1px solid #1a1a1a; max-height: 300px; overflow-y: auto; }
   
-  .canvas-wrapper { position: relative; width: 100%; height: 500px; background: #050505; border-radius: 12px; border: 1px solid var(--border-light); overflow: hidden; }
+  /* Canvas e Split Screen */
+  .graph-container { display: flex; gap: 16px; height: 600px; width: 100%; transition: 0.3s; }
+  .canvas-wrapper { position: relative; flex: 1; background: #050505; border-radius: 12px; border: 1px solid var(--border-light); overflow: hidden; transition: 0.3s; }
   canvas { width: 100%; height: 100%; touch-action: none; cursor: grab; display: block; }
   canvas:active { cursor: grabbing; }
   .graph-controls { position: absolute; bottom: 16px; right: 16px; display: flex; gap: 8px; z-index: 10; }
   .graph-btn { background: rgba(17,17,17,0.8); border: 1px solid var(--border-light); color: var(--text); padding: 8px; border-radius: 6px; cursor: pointer; font-size: 16px; min-width: 36px; display: flex; justify-content: center; align-items: center; }
   
-  #lockScreen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; z-index: 9999; }
+  #graphSidePanel { display: none; width: 350px; background: #0a0a0a; border: 1px solid var(--border-light); border-radius: 12px; padding: 16px; overflow-y: auto; flex-shrink: 0; }
   
+  #lockScreen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; z-index: 9999; }
   #customModalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 10000; }
   .modal-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 100%; max-width: 400px; text-align: center; }
   .modal-title { color: var(--accent); margin-top: 0; font-size: 16px; }
@@ -119,7 +125,7 @@
         <h3 style="justify-content: center; color: var(--warning); margin-bottom: 16px;">Configurazione Iniziale</h3>
         <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px; text-align: left;">
           Il database è vuoto. Imposta una <b>Master Password</b> per decriptare i dati nei futuri accessi. 
-          Imposta anche un <b>PIN di Autodistruzione</b>: se inserito nella schermata di login, cancellerà istantaneamente tutto.
+          Imposta anche un <b>PIN di Autodistruzione</b>: se inserito al login, formatterà istantaneamente tutto.
         </p>
         <input type="password" id="setupPwd" placeholder="Crea Master Password" style="text-align:center; font-size:16px; letter-spacing:2px; padding:12px;">
         <input type="password" id="setupDestruct" placeholder="Crea PIN Autodistruzione" style="text-align:center; font-size:16px; letter-spacing:2px; padding:12px; border-color: rgba(255,59,92,0.5);">
@@ -153,7 +159,7 @@
   </div>
 </div>
 
-<!-- HEADER E UI PRINCIPALE (Nascosta all'avvio) -->
+<!-- HEADER E UI PRINCIPALE -->
 <header>
   <div style="font-weight: 800; font-size: 18px; letter-spacing: 1px;">VaultAI</div>
   <div id="modeIndicator" class="badge">LOCKED</div>
@@ -170,7 +176,7 @@
   <div class="tabs" id="mainTabs" style="display:none;">
     <div class="tab active" onclick="switchTab('docs')">📄 Reperti</div>
     <div class="tab" onclick="switchTab('timeline')">⏱️ Timeline</div>
-    <div class="tab" onclick="switchTab('graph')">🕸️ Grafo Relazioni</div>
+    <div class="tab" onclick="switchTab('graph')">🕸️ Grafo & Split-Screen</div>
     <div class="tab" onclick="switchTab('stats')">📊 Statistiche</div>
     <div class="tab" onclick="switchTab('rules')">⚙️ Regole NER</div>
     <div class="tab" onclick="switchTab('forensic')">⛓️ Sicurezza & Export</div>
@@ -179,10 +185,10 @@
   <!-- TAB 1: REPERTI -->
   <div id="tab-docs" style="display:none;">
     <div class="card">
-      <h3>📁 Acquisizione Reperti</h3>
+      <h3>📁 Acquisizione Reperti Multi-Mediale</h3>
       <input type="file" id="fileUpload" multiple style="display:none;" onchange="handleFileUpload(event)">
       <button class="btn-upload" id="uploadBtn" onclick="document.getElementById('fileUpload').click()">
-        <span style="font-size:24px; margin-bottom:4px;">📥</span> Carica File (PDF, TXT)
+        <span style="font-size:24px; margin-bottom:4px;">📥</span> Carica PDF, Testo o Immagini (OCR Locale)
       </button>
       <div style="text-align: center; margin: 16px 0; color: #444; font-size: 12px; font-weight: bold;">OPPURE INSERIMENTO MANUALE</div>
       <input type="text" id="docTitle" placeholder="Titolo Reperto (Es. Intercettazione_A)">
@@ -207,21 +213,30 @@
     </div>
   </div>
 
-  <!-- TAB 3: GRAFO -->
+  <!-- TAB 3: GRAFO E SPLIT SCREEN -->
   <div id="tab-graph" style="display:none;">
     <div class="card" style="padding: 10px;">
       <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 10px 10px 10px;">
-        <h3 style="margin:0;">🕸️ Grafo Interattivo</h3>
+        <h3 style="margin:0;">🕸️ Link Analysis </h3>
         <button class="btn-secondary" style="width:auto; padding:4px 10px; font-size:11px;" onclick="initGraph()">Ricalcola Layout</button>
       </div>
-      <div class="canvas-wrapper">
-        <canvas id="graphCanvas"></canvas>
-        <div class="graph-controls">
-          <button class="graph-btn" onclick="zoomGraph(1.2)">➕</button>
-          <button class="graph-btn" onclick="zoomGraph(0.8)">➖</button>
-          <button class="graph-btn" onclick="resetGraphView()">🏠</button>
+      
+      <!-- CONTENITORE SPLIT-SCREEN -->
+      <div class="graph-container">
+        <div class="canvas-wrapper">
+          <canvas id="graphCanvas"></canvas>
+          <div class="graph-controls">
+            <button class="graph-btn" onclick="zoomGraph(1.2)">➕</button>
+            <button class="graph-btn" onclick="zoomGraph(0.8)">➖</button>
+            <button class="graph-btn" onclick="resetGraphView()">🏠</button>
+          </div>
+        </div>
+        
+        <div id="graphSidePanel">
+           <!-- Popolato dinamicamente da JS al click su un nodo -->
         </div>
       </div>
+
     </div>
   </div>
 
@@ -272,15 +287,11 @@
 </div>
 
 <script>
-if (window['pdfjs-dist/build/pdf']) {
-  window['pdfjs-dist/build/pdf'].GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-}
-
 // --- GESTIONE STATO E VARIABILI GLOBALI ---
 let db;
 let masterKey = null; 
 let masterSalt = null;
-let destructHashInMemory = null; // Hash del PIN di autodistruzione
+let destructHashInMemory = null; 
 let inactivityTimer;
 
 let state = { workspaces: ['Indagine_Principale'], currentWorkspace: 'Indagine_Principale', docs: [], audit: [] };
@@ -295,7 +306,7 @@ const coreRules = {
   'data': { regex: /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g, class: 'c-data', label: 'Data' }
 };
 
-// --- BOOT E GESTIONE DATABASE (PROMISES) ---
+// --- BOOT E GESTIONE DATABASE ---
 function initDB() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open("VaultAI_Forensic", 1);
@@ -327,11 +338,9 @@ async function checkBootState() {
     req.onsuccess = (e) => {
       const record = e.target.result;
       if (!record) {
-        // DATABASE VUOTO -> MOSTRA SETUP
         document.getElementById('setupModeUI').style.display = 'block';
         document.getElementById('loginModeUI').style.display = 'none';
       } else {
-        // DATABASE ESISTE -> CARICA HASH DISTRUZIONE E MOSTRA LOGIN
         destructHashInMemory = record.destructHash;
         masterSalt = record.salt;
         document.getElementById('setupModeUI').style.display = 'none';
@@ -353,7 +362,6 @@ async function computeHash(text) {
   }
   return fallbackSHA256(text);
 }
-
 async function deriveKey(password, salt) {
   const enc = new TextEncoder();
   const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(password), {name: "PBKDF2"}, false, ["deriveKey"]);
@@ -363,60 +371,46 @@ async function deriveKey(password, salt) {
   );
 }
 
-// --- SETUP INIZIALE (Crea chiavi e DB) ---
+// --- SETUP E LOGIN ---
 async function setupVault() {
   const pwd = document.getElementById('setupPwd').value.trim();
   const destruct = document.getElementById('setupDestruct').value.trim();
-  
-  if(!pwd || !destruct) return openModal("Errore", "Devi compilare entrambi i campi PIN.");
-  if(pwd === destruct) return openModal("Errore", "La Master Password e il PIN di Autodistruzione devono essere diversi.");
+  if(!pwd || !destruct) return openModal("Errore", "Compila entrambi i campi PIN.");
+  if(pwd === destruct) return openModal("Errore", "La Master Password e il PIN di Autodistruzione devono differire.");
   
   masterSalt = crypto.getRandomValues(new Uint8Array(16));
   masterKey = await deriveKey(pwd, masterSalt);
-  destructHashInMemory = await computeHash(destruct); // Hash irreversibile salvato in chiaro nel DB locale
+  destructHashInMemory = await computeHash(destruct);
   
   await saveEncryptedState();
-  
-  document.getElementById('setupPwd').value = '';
-  document.getElementById('setupDestruct').value = '';
+  document.getElementById('setupPwd').value = ''; document.getElementById('setupDestruct').value = '';
   proceedToUnlock();
 }
 
-// --- LOGIN ROUTINE ---
 async function attemptLogin() {
   const pwd = document.getElementById('loginPwd').value.trim();
   if(!pwd) return;
-  
-  // 1. Controllo PIN di Autodistruzione (invisibile)
   const inputHash = await computeHash(pwd);
-  if (inputHash === destructHashInMemory) {
-    return executeSelfDestruct();
-  }
+  if (inputHash === destructHashInMemory) return executeSelfDestruct();
   
-  // 2. Controllo Master Password tramite decrittografia
   try {
     const tx = db.transaction('secureVault', 'readonly');
     const req = tx.objectStore('secureVault').get('main');
-    
     req.onsuccess = async (e) => {
       const record = e.target.result;
       try {
         const key = await deriveKey(pwd, record.salt);
         const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: record.iv }, key, record.data);
-        
         const payload = JSON.parse(new TextDecoder().decode(decrypted));
-        masterKey = key;
-        state = payload.state;
-        customRules = {};
+        
+        masterKey = key; state = payload.state; customRules = {};
         payload.rules.forEach(r => { customRules[r.id] = { regex: new RegExp(r.r, 'g'), class:'c-custom', label:r.l }; });
         
         document.getElementById('loginPwd').value = '';
         proceedToUnlock();
-      } catch(err) {
-        openModal("Accesso Negato", "Password errata.");
-      }
+      } catch(err) { openModal("Accesso Negato", "Password errata."); }
     };
-  } catch(e) { console.error(e); }
+  } catch(e) {}
 }
 
 async function proceedToUnlock() {
@@ -425,118 +419,80 @@ async function proceedToUnlock() {
   document.getElementById('workspaceSelectorContainer').style.display = 'flex';
   document.getElementById('mainTabs').style.display = 'flex';
   
-  switchTab('docs');
-  await logAction("SYSTEM_UNLOCKED");
-  renderWorkspaces();
-  renderRulesList();
-  renderAllViews();
-  resetInactivity();
+  switchTab('docs'); await logAction("SYSTEM_UNLOCKED");
+  renderWorkspaces(); renderRulesList(); renderAllViews(); resetInactivity();
 }
 
-// --- AUTODISTRUZIONE SILENZIOSA ---
 function executeSelfDestruct() {
   const req = indexedDB.deleteDatabase("VaultAI_Forensic");
-  req.onsuccess = () => { location.reload(); }; // Nessun popup, reload immediato
-  req.onerror = () => { location.reload(); };
+  req.onsuccess = () => { location.reload(); }; req.onerror = () => { location.reload(); };
 }
 
-// --- SALVATAGGIO STATO ATOMICO ---
 async function saveEncryptedState() {
   if(!masterKey || !db || !masterSalt || !destructHashInMemory) return;
   try {
     const payload = JSON.stringify({ state, rules: Object.keys(customRules).map(k=>({id:k, r:customRules[k].regex.source, l:customRules[k].label})) });
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, masterKey, new TextEncoder().encode(payload));
-    
     const tx = db.transaction('secureVault', 'readwrite');
-    tx.objectStore('secureVault').put({ 
-      id: 'main', 
-      salt: masterSalt, 
-      iv: iv, 
-      data: encrypted,
-      destructHash: destructHashInMemory // Salviamo l'hash del PIN di distruzione
-    });
-  } catch(e) { console.error("Save Error:", e); }
+    tx.objectStore('secureVault').put({ id: 'main', salt: masterSalt, iv: iv, data: encrypted, destructHash: destructHashInMemory });
+  } catch(e) {}
 }
 
-// --- BLOCCO SISTEMA ---
 function lockSystem() {
-  masterKey = null; 
-  state = { workspaces: ['Indagine_Principale'], currentWorkspace: 'Indagine_Principale', docs: [], audit: [] }; 
-  customRules = {};
-  
-  document.getElementById('setupModeUI').style.display = 'none';
-  document.getElementById('loginModeUI').style.display = 'block';
-  document.getElementById('lockScreen').style.display = 'flex';
-  document.getElementById('workspaceSelectorContainer').style.display = 'none';
-  document.getElementById('mainTabs').style.display = 'none';
-  document.getElementById('modeIndicator').innerText = "LOCKED";
-  
+  masterKey = null; state = { workspaces: ['Indagine_Principale'], currentWorkspace: 'Indagine_Principale', docs: [], audit: [] }; customRules = {};
+  document.getElementById('setupModeUI').style.display = 'none'; document.getElementById('loginModeUI').style.display = 'block';
+  document.getElementById('lockScreen').style.display = 'flex'; document.getElementById('workspaceSelectorContainer').style.display = 'none';
+  document.getElementById('mainTabs').style.display = 'none'; document.getElementById('modeIndicator').innerText = "LOCKED";
   ['docsList', 'timelineContainer', 'statsContainer', 'auditLog', 'rulesList'].forEach(id => document.getElementById(id).innerHTML = '');
 }
 
-// --- MODALI CUSTOM ---
+// --- MODALI E LOGGING ---
 let modalCallback = null;
 function openModal(title, msg, isPrompt = false, callback = null, isInputPassword = false) {
-  document.getElementById('modalTitle').innerText = title;
-  document.getElementById('modalMsg').innerText = msg;
-  const inputContainer = document.getElementById('modalInputContainer');
-  const inp = document.getElementById('modalInput');
-  if (isPrompt) {
-    inputContainer.style.display = 'block';
-    inp.type = isInputPassword ? 'password' : 'text';
-    inp.value = '';
-  } else { inputContainer.style.display = 'none'; }
+  document.getElementById('modalTitle').innerText = title; document.getElementById('modalMsg').innerText = msg;
+  const inputContainer = document.getElementById('modalInputContainer'); const inp = document.getElementById('modalInput');
+  if (isPrompt) { inputContainer.style.display = 'block'; inp.type = isInputPassword ? 'password' : 'text'; inp.value = ''; } 
+  else { inputContainer.style.display = 'none'; }
   modalCallback = callback;
-  
   let btns = `<button class="btn-primary" onclick="submitModal()">OK</button>`;
   if(isPrompt) btns = `<button class="btn-secondary" onclick="closeModal()">Annulla</button>` + btns;
   document.getElementById('modalBtns').innerHTML = btns;
-  document.getElementById('customModalOverlay').style.display = 'flex';
-  if(isPrompt) setTimeout(()=>inp.focus(), 50);
+  document.getElementById('customModalOverlay').style.display = 'flex'; if(isPrompt) setTimeout(()=>inp.focus(), 50);
 }
 function closeModal() { document.getElementById('customModalOverlay').style.display = 'none'; modalCallback = null; }
 function submitModal() { const val = document.getElementById('modalInput').value; closeModal(); if(modalCallback) modalCallback(val); }
 
-// --- LOGGING ---
 async function logAction(actionName) {
-  const ts = new Date().toISOString();
-  const prevHash = state.audit.length > 0 ? state.audit[state.audit.length - 1].hash : "GENESIS_BLOCK";
-  const rawData = `${ts}|${actionName}|${prevHash}`;
-  const currentHash = await computeHash(rawData);
+  const ts = new Date().toISOString(); const prevHash = state.audit.length > 0 ? state.audit[state.audit.length - 1].hash : "GENESIS_BLOCK";
+  const rawData = `${ts}|${actionName}|${prevHash}`; const currentHash = await computeHash(rawData);
   state.audit.push({ time: ts, action: actionName, prev: prevHash.substring(0, 16), hash: currentHash.substring(0, 16), _raw: rawData });
-  renderAudit();
-  saveEncryptedState();
+  renderAudit(); saveEncryptedState();
 }
-
 function resetInactivity() { clearTimeout(inactivityTimer); if(masterKey) inactivityTimer = setTimeout(lockSystem, 15 * 60 * 1000); }
 window.addEventListener('mousemove', resetInactivity); window.addEventListener('keypress', resetInactivity);
 
-// --- UTILITA' e RENDER ---
+// --- UTILITA E RENDER ---
 function escapeHTML(str) { return !str ? "" : str.toString().replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])); }
 function highlightEntities(text, entities) {
-  let escaped = escapeHTML(text);
-  const sorted = [...entities].sort((a,b) => b.val.length - a.val.length);
-  const map = {};
+  let escaped = escapeHTML(text); const sorted = [...entities].sort((a,b) => b.val.length - a.val.length); const map = {};
   sorted.forEach((e, i) => {
     const key = `__MARKER_${i}__`; map[key] = `<mark class="${e.class}">${escapeHTML(e.val)}</mark>`;
     escaped = escaped.replace(new RegExp(escapeHTML(e.val).replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), key);
   });
-  Object.keys(map).forEach(key => { escaped = escaped.split(key).join(map[key]); });
-  return escaped;
+  Object.keys(map).forEach(key => { escaped = escaped.split(key).join(map[key]); }); return escaped;
 }
 function getActiveDocs() { return state.docs.filter(d => d.workspace === state.currentWorkspace); }
 function renderWorkspaces() { document.getElementById('workspaceSelect').innerHTML = state.workspaces.map(w => `<option value="${escapeHTML(w)}" ${w===state.currentWorkspace?'selected':''}>${escapeHTML(w)}</option>`).join(''); }
-function changeWorkspace() { state.currentWorkspace = document.getElementById('workspaceSelect').value; renderAllViews(); }
+function changeWorkspace() { state.currentWorkspace = document.getElementById('workspaceSelect').value; renderAllViews(); document.getElementById('graphSidePanel').style.display='none'; }
 function promptNewWorkspace() { openModal("Nuovo", "Nome fascicolo:", true, (n) => { if(n&&!state.workspaces.includes(n)){ state.workspaces.push(n); state.currentWorkspace = n; renderWorkspaces(); renderAllViews(); logAction("CREATED_WORKSPACE: "+n); } }); }
 
-// --- REGOLE NER ---
+// --- REGOLE NER E DOCS (CON OCR) ---
 function addCustomRule() {
   const name = document.getElementById('ruleName').value.trim(); const regexStr = document.getElementById('ruleRegex').value.trim();
   if(!name || !regexStr) return;
   try {
-    const id = name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    customRules[id] = { regex: new RegExp(regexStr, 'g'), class: 'c-custom', label: name };
+    const id = name.toLowerCase().replace(/[^a-z0-9]/g, '_'); customRules[id] = { regex: new RegExp(regexStr, 'g'), class: 'c-custom', label: name };
     document.getElementById('ruleName').value = ''; document.getElementById('ruleRegex').value = '';
     state.docs.forEach(d => d.entities = extractEntities(d.content)); saveEncryptedState(); renderRulesList(); renderAllViews();
   } catch(e) { openModal("Errore", "Regex non valida"); }
@@ -549,38 +505,44 @@ function extractEntities(text) {
   return entities.filter((v,i,a)=>a.findIndex(t=>(t.type===v.type && t.val===v.val))===i);
 }
 
-// --- DOCUMENTI ---
 function cleanExtractedText(text) { return text.replace(/\b(?:obj|endobj|stream|endstream|xref|trailer|startxref|\%PDF-\d\.\d)\b/g, '').replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, '').replace(/\s{2,}/g, ' ').trim(); }
 async function processDoc(title, content) {
   const c = cleanExtractedText(content);
   state.docs.unshift({ id: 'doc_'+Date.now()+'_'+Math.floor(Math.random()*1000), workspace: state.currentWorkspace, title: title, content: c, entities: extractEntities(c), hash: (await computeHash(title+c)).substring(0,16) });
   await logAction(`INDEXED_DOC [${state.currentWorkspace}]`);
 }
-async function addDocument() {
-  const t = document.getElementById('docTitle').value || `Reperto_${Math.floor(Math.random()*9000)}`; const c = document.getElementById('docContent').value;
-  if (!c) return; await processDoc(t, c); document.getElementById('docTitle').value = ''; document.getElementById('docContent').value = ''; renderAllViews();
-}
+async function addDocument() { const t = document.getElementById('docTitle').value || `Reperto_${Math.floor(Math.random()*9000)}`; const c = document.getElementById('docContent').value; if (!c) return; await processDoc(t, c); document.getElementById('docTitle').value = ''; document.getElementById('docContent').value = ''; renderAllViews(); }
 function redactInput() {
-  let t = document.getElementById('docContent').value;
-  t = t.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "█████████");
-  t = t.replace(/\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/g, "████████████████");
-  t = t.replace(/(?:€|EUR)\s?\d+(?:[.,]\d+)?/gi, "[IMPORTO_OSCURATO]");
+  let t = document.getElementById('docContent').value; t = t.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "█████████").replace(/\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/g, "████████████████").replace(/(?:€|EUR)\s?\d+(?:[.,]\d+)?/gi, "[IMPORTO_OSCURATO]");
   document.getElementById('docContent').value = t;
 }
+
+// GESTIONE UPLOAD CON OCR TESSERACT INTEGATO
 async function handleFileUpload(event) {
   const files = event.target.files; if (!files || files.length === 0) return;
-  const btn = document.getElementById('uploadBtn'); const og = btn.innerHTML; btn.innerHTML = "⏳ ELABORAZIONE..."; btn.disabled = true;
+  const btn = document.getElementById('uploadBtn'); const og = btn.innerHTML; 
+  
   for (let f of files) {
-    try { let txt = "";
-      if (f.type === 'application/pdf' && window['pdfjs-dist/build/pdf']) {
+    try { 
+      let txt = "";
+      if (f.type.startsWith('image/')) {
+        // OCR IMAGE PROCESSING
+        btn.innerHTML = `⏳ ESTRAZIONE TESTO DA IMMAGINE (${f.name})...`; btn.disabled = true;
+        const { data: { text } } = await Tesseract.recognize(f, 'ita', { logger: m => console.log(m) });
+        txt = text;
+      } 
+      else if (f.type === 'application/pdf' && window['pdfjs-dist/build/pdf']) {
+        btn.innerHTML = `⏳ PARSING PDF (${f.name})...`; btn.disabled = true;
         const pdf = await window['pdfjs-dist/build/pdf'].getDocument(new Uint8Array(await f.arrayBuffer())).promise;
         for (let i = 1; i <= pdf.numPages; i++) { const page = await pdf.getPage(i); txt += (await page.getTextContent()).items.map(it => it.str).join(' ') + "\n"; }
-      } else {
+      } 
+      else {
+        btn.innerHTML = `⏳ LETTURA FILE (${f.name})...`; btn.disabled = true;
         const bytes = new Uint8Array(await f.arrayBuffer()); let str = "";
         for(let i=0; i<bytes.length; i++) { let c=bytes[i]; if((c>=32 && c<=126) || c===10) str+=String.fromCharCode(c); else { if(str.length>4) txt+=str+" "; str=""; } }
       }
       await processDoc(f.name, txt);
-    } catch(e) {}
+    } catch(e) { console.error(e); }
   }
   renderAllViews(); event.target.value = ""; btn.innerHTML = og; btn.disabled = false;
 }
@@ -613,10 +575,11 @@ function renderStats() {
   container.innerHTML = sorted.slice(0,30).map(([key, count]) => { const [type, val, cls] = key.split("|||"); return `<div class="stat-row"><div style="display:flex; align-items:center; gap:10px;"><span class="chip ${cls}" style="min-width:80px; justify-content:center;">${escapeHTML(type)}</span> <span style="font-weight:600; font-size:14px;">${escapeHTML(val)}</span></div><div style="color:var(--accent); font-weight:bold; font-size:14px;">${count}</div></div>`; }).join('');
 }
 
-// --- GRAFO INTERATTIVO ---
+// --- GRAFO E SPLIT-SCREEN ---
 let graphNodes = [], graphEdges = [], animFrame = null, dragNode = null, focusNode = null, viewTransform = { x: 0, y: 0, k: 1 }, isDraggingBackground = false, lastMouse = {x:0, y:0};
 function initGraph() {
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  document.getElementById('graphSidePanel').style.display = 'none';
   graphNodes = []; graphEdges = []; focusNode = null; viewTransform = { x: 0, y: 0, k: 1 }; let eMap = {};
   getActiveDocs().forEach(doc => {
     let nd = { id: doc.id, label: doc.title.substring(0,12)+"..", type: 'doc', x: Math.random()*800, y: Math.random()*800, vx:0, vy:0, connected: [] }; graphNodes.push(nd);
@@ -624,7 +587,27 @@ function initGraph() {
   }); updateGraph();
 }
 function zoomGraph(factor) { const cvs = document.getElementById('graphCanvas'); const cx = cvs.width / 2, cy = cvs.height / 2; viewTransform.x = cx - (cx - viewTransform.x) * factor; viewTransform.y = cy - (cy - viewTransform.y) * factor; viewTransform.k *= factor; updateGraph(true); }
-function resetGraphView() { viewTransform = {x:0, y:0, k:1}; focusNode=null; updateGraph(true); }
+function resetGraphView() { viewTransform = {x:0, y:0, k:1}; focusNode=null; document.getElementById('graphSidePanel').style.display = 'none'; updateGraph(true); }
+
+function showSidePanel(node) {
+  const panel = document.getElementById('graphSidePanel');
+  panel.style.display = 'block';
+  if(node.type === 'doc') {
+    const doc = state.docs.find(d => d.id === node.id);
+    panel.innerHTML = `<h4 style="font-size:15px; color:#fff;">📄 ${escapeHTML(doc.title)}</h4>
+      <div style="font-size:12px; line-height:1.6; color:#ccc; max-height:450px; overflow-y:auto; border-top:1px solid #333; padding-top:12px;">${highlightEntities(doc.content, doc.entities)}</div>
+      <button class='btn-secondary' style='margin-top:16px; width:100%' onclick='document.getElementById("graphSidePanel").style.display="none"'>Chiudi Dettagli</button>`;
+  } else {
+    let linkedDocs = state.docs.filter(d => d.entities.some(e => e.val === node.label));
+    let docsHtml = linkedDocs.map(d => `<div style="padding:10px; border:1px solid #333; margin-bottom:8px; border-radius:6px; font-size:12px; background:#111;">📄 <b>${escapeHTML(d.title)}</b><br><span style="color:#666;font-size:10px;">SHA: ${d.hash}</span></div>`).join('');
+    panel.innerHTML = `<h4 style="font-size:16px;"><span class="chip ${node.class}">${escapeHTML(node.type)}</span></h4>
+      <div style="font-size:16px; font-weight:bold; margin-bottom: 16px; word-break: break-all;">${escapeHTML(node.label)}</div>
+      <p style="font-size:12px; color:#888; margin-bottom:12px; border-bottom:1px solid #333; padding-bottom:8px;">Presente in ${linkedDocs.length} documenti correlati:</p>
+      <div style="max-height:400px; overflow-y:auto;">${docsHtml}</div>
+      <button class='btn-secondary' style='margin-top:16px; width:100%' onclick='document.getElementById("graphSidePanel").style.display="none"'>Chiudi Dettagli</button>`;
+  }
+}
+
 function updateGraph(forceRender = false) {
   const cvs = document.getElementById('graphCanvas'); const ctx = cvs.getContext('2d'); const dpr = window.devicePixelRatio || 1; const rect = cvs.getBoundingClientRect(); if(cvs.width !== rect.width * dpr) { cvs.width = rect.width * dpr; cvs.height = rect.height * dpr; } let kineticEnergy = 0;
   graphNodes.forEach(n1 => { graphNodes.forEach(n2 => { if(n1===n2) return; let dx=n2.x-n1.x, dy=n2.y-n1.y, dist=Math.sqrt(dx*dx+dy*dy)||1; if(dist<200) { let force=-400/(dist*dist); n1.vx+=(dx/dist)*force; n1.vy+=(dy/dist)*force; } }); n1.vx+=(400-n1.x)*0.001; n1.vy+=(400-n1.y)*0.001; });
@@ -640,9 +623,24 @@ function updateGraph(forceRender = false) {
   if(kineticEnergy > 1.5 || dragNode || isDraggingBackground || forceRender) { animFrame = requestAnimationFrame(() => updateGraph()); } else { animFrame = null; }
 }
 function getPtrLogico(e) { const r = document.getElementById('graphCanvas').getBoundingClientRect(); const dpr = window.devicePixelRatio || 1; const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left; const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top; return { rawX: x, rawY: y, logX: (x * dpr - viewTransform.x) / viewTransform.k, logY: (y * dpr - viewTransform.y) / viewTransform.k }; }
-document.getElementById('graphCanvas').addEventListener('mousedown', e => { const p = getPtrLogico(e); let n = graphNodes.find(n => Math.hypot(n.x - p.logX, n.y - p.logY) < 25 / viewTransform.k); if(n) { dragNode = n; focusNode = n; if(!animFrame) updateGraph(true); } else { isDraggingBackground = true; lastMouse = {x: p.rawX, y: p.rawY}; focusNode = null; if(!animFrame) updateGraph(true); }});
+
+let mouseDownPos = {x:0, y:0};
+document.getElementById('graphCanvas').addEventListener('mousedown', e => { 
+  const p = getPtrLogico(e); mouseDownPos = {x: p.rawX, y: p.rawY};
+  let n = graphNodes.find(n => Math.hypot(n.x - p.logX, n.y - p.logY) < 25 / viewTransform.k); 
+  if(n) { dragNode = n; focusNode = n; if(!animFrame) updateGraph(true); } 
+  else { isDraggingBackground = true; lastMouse = {x: p.rawX, y: p.rawY}; focusNode = null; document.getElementById('graphSidePanel').style.display='none'; if(!animFrame) updateGraph(true); }
+});
 window.addEventListener('mousemove', e => { const p = getPtrLogico(e); if(dragNode) { dragNode.x = p.logX; dragNode.y = p.logY; dragNode.vx=0; dragNode.vy=0; if(!animFrame) updateGraph(true); } else if(isDraggingBackground) { const dpr = window.devicePixelRatio || 1; viewTransform.x += (p.rawX - lastMouse.x) * dpr; viewTransform.y += (p.rawY - lastMouse.y) * dpr; lastMouse = {x: p.rawX, y: p.rawY}; if(!animFrame) updateGraph(true); }});
-window.addEventListener('mouseup', () => { dragNode = null; isDraggingBackground = false; }); document.getElementById('graphCanvas').addEventListener('wheel', e => { e.preventDefault(); zoomGraph(e.deltaY < 0 ? 1.1 : 0.9); });
+window.addEventListener('mouseup', e => { 
+  if(dragNode) {
+    const p = getPtrLogico(e);
+    // Se il mouse si è mosso pochissimo, è considerato un click (apre pannello)
+    if(Math.hypot(p.rawX - mouseDownPos.x, p.rawY - mouseDownPos.y) < 5) showSidePanel(dragNode);
+  }
+  dragNode = null; isDraggingBackground = false; 
+});
+document.getElementById('graphCanvas').addEventListener('wheel', e => { e.preventDefault(); zoomGraph(e.deltaY < 0 ? 1.1 : 0.9); });
 
 // --- TABS & EXPORT ---
 function switchTab(tId) { ['docs','timeline','graph','stats','rules','forensic'].forEach(t => document.getElementById('tab-'+t).style.display = t===tId?'block':'none'); document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', ['docs','timeline','graph','stats','rules','forensic'][i]===tId)); if(tId==='graph') initGraph(); else if(animFrame){ cancelAnimationFrame(animFrame); animFrame=null; } }
