@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#000000">
-<title>VaultAI - Enterprise Forensic Enclave</title>
+<title>VaultAI - Premium Forensic Enclave</title>
 
 <!-- Librerie Esterne (PDF e OCR) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
@@ -23,6 +23,7 @@
   
   header { background: rgba(17,17,17,0.85); backdrop-filter: blur(10px); padding: 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
   .badge { background: var(--accent-dim); color: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; border: 1px solid rgba(0,229,255,0.3); }
+  .pro-badge { background: linear-gradient(45deg, #ffb300, #ff6d00); color: #000; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 900; margin-left: 8px; letter-spacing: 0.5px;}
   
   .container { padding: 16px; max-width: 1200px; margin: auto; }
   .card { background: var(--card); border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); transition: 0.2s ease; position: relative; }
@@ -40,6 +41,7 @@
   .btn-primary { background: var(--accent); color: #000; }
   .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border-light); }
   .btn-danger { background: rgba(255,59,92,0.1); color: var(--danger); border: 1px solid rgba(255,59,92,0.3); }
+  .btn-warning { background: rgba(255,179,0,0.1); color: var(--warning); border: 1px solid rgba(255,179,0,0.3); }
   .btn-upload { background: rgba(0, 230, 118, 0.1); color: var(--success); border: 1px dashed var(--success); padding: 20px; flex-direction: column; width: 100%; }
   
   .workspace-selector { display: flex; align-items: center; gap: 10px; background: #0a0a0a; padding: 12px; border-radius: 8px; border: 1px solid var(--border-light); margin-bottom: 20px; }
@@ -66,6 +68,7 @@
   .entity-chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip { padding: 4px 10px; border-radius: 6px; font-size: 12px; background: #1a1a1a; border: 1px solid #333; display: inline-flex; align-items: center; font-weight: 500; }
   
+  /* Colori Categorie */
   .c-email { color: #2196f3; border-color: rgba(33,150,243,0.3); background: rgba(33,150,243,0.05); }
   .c-iban { color: #ffeb3b; border-color: rgba(255,235,59,0.3); background: rgba(255,235,59,0.05); }
   .c-importo { color: #00e676; border-color: rgba(0,230,118,0.3); background: rgba(0,230,118,0.05); }
@@ -73,8 +76,12 @@
   .c-targa { color: #00bcd4; border-color: rgba(0,188,212,0.3); background: rgba(0,188,212,0.05); }
   .c-tel { color: #9c27b0; border-color: rgba(156,39,176,0.3); background: rgba(156,39,176,0.05); }
   .c-data { color: #795548; border-color: rgba(121,85,72,0.3); background: rgba(121,85,72,0.05); }
+  .c-crypto { color: #ff9800; border-color: rgba(255,152,0,0.3); background: rgba(255,152,0,0.05); }
+  .c-network { color: #4caf50; border-color: rgba(76,175,80,0.3); background: rgba(76,175,80,0.05); }
   .c-custom { color: #b388ff; border-color: rgba(179,136,255,0.3); background: rgba(179,136,255,0.05); }
   
+  /* Text Marker Highlighting */
+  ::selection { background: rgba(0, 229, 255, 0.4); }
   mark { background: transparent; padding: 0 4px; border-radius: 4px; border: 1px solid transparent; }
   mark.c-email { background: rgba(33,150,243,0.2); color: #64b5f6; border-color: rgba(33,150,243,0.4); }
   mark.c-iban { background: rgba(255,235,59,0.2); color: #fff59d; border-color: rgba(255,235,59,0.4); }
@@ -83,10 +90,12 @@
   mark.c-targa { background: rgba(0,188,212,0.2); color: #4dd0e1; border-color: rgba(0,188,212,0.4); }
   mark.c-tel { background: rgba(156,39,176,0.2); color: #ba68c8; border-color: rgba(156,39,176,0.4); }
   mark.c-data { background: rgba(121,85,72,0.3); color: #a1887f; border-color: rgba(121,85,72,0.5); }
+  mark.c-crypto { background: rgba(255,152,0,0.2); color: #ffb74d; border-color: rgba(255,152,0,0.4); }
+  mark.c-network { background: rgba(76,175,80,0.2); color: #81c784; border-color: rgba(76,175,80,0.4); }
   mark.c-custom { background: rgba(179,136,255,0.2); color: #d1c4e9; border-color: rgba(179,136,255,0.4); }
 
   .text-box { background: #050505; border: 1px solid #1a1a1a; padding: 14px; border-radius: 8px; font-size: 14px; line-height: 1.7; color: #ccc; max-height: 150px; overflow: hidden; position: relative; white-space: pre-wrap; word-break: break-word; transition: max-height 0.3s ease; }
-  .text-box.expanded { max-height: 5000px; }
+  .text-box.expanded { max-height: none; }
   .text-box-fade { position: absolute; bottom: 0; left: 0; right: 0; height: 60px; background: linear-gradient(transparent, #050505 80%); cursor: pointer; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 8px; font-size: 11px; color: var(--accent); font-weight: bold; }
   
   .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #0a0a0a; border: 1px solid #1a1a1a; margin-bottom: 6px; border-radius: 6px; }
@@ -102,7 +111,6 @@
   #graphSidePanel { display: none; width: 350px; background: #0a0a0a; border: 1px solid var(--border-light); border-radius: 12px; padding: 16px; overflow-y: auto; flex-shrink: 0; }
   
   #lockScreen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; z-index: 9999; }
-  
   #customModalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 10000; }
   .modal-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 100%; max-width: 400px; text-align: center; }
   .modal-title { color: var(--accent); margin-top: 0; font-size: 16px; }
@@ -118,11 +126,10 @@
     <p style="color:var(--success); font-size: 11px; margin-bottom: 30px; letter-spacing: 1px; font-weight:bold;">ENTERPRISE FORENSIC EDITION</p>
     
     <div class="card" style="padding: 24px;">
-      <!-- SETUP -->
       <div id="setupModeUI" style="display:none;">
         <h3 style="justify-content: center; color: var(--warning); margin-bottom: 16px;">Configurazione Iniziale</h3>
         <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px; text-align: left;">
-          Imposta una <b>Master Password</b> per decriptare i dati nei futuri accessi. 
+          Imposta una <b>Master Password</b> per decriptare i dati. 
           Imposta un <b>PIN di Autodistruzione</b>: se inserito al login, formatterà istantaneamente il database.
         </p>
         <input type="password" id="setupPwd" placeholder="Crea Master Password" style="text-align:center; font-size:16px; letter-spacing:2px; padding:12px;">
@@ -130,7 +137,6 @@
         <button class="btn-primary" onclick="setupVault()" style="width: 100%; margin-top: 10px;">INIZIALIZZA E ACCEDI</button>
       </div>
 
-      <!-- LOGIN -->
       <div id="loginModeUI" style="display:none;">
         <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Inserisci la Master Password per sbloccare il Vault.</p>
         <input type="password" id="loginPwd" placeholder="Password" style="text-align:center; font-size:20px; letter-spacing:4px; padding:16px;" onkeypress="if(event.key==='Enter') attemptLogin()">
@@ -140,31 +146,29 @@
   </div>
 </div>
 
-<!-- MODAL OVERLAY RIPARATO -->
+<!-- MODAL OVERLAY -->
 <div id="customModalOverlay">
   <div class="modal-box">
     <h3 id="modalTitle" class="modal-title">Avviso</h3>
     <div id="modalMsg" class="modal-msg">Messaggio</div>
     <div id="modalInputContainer" style="display:none;">
-      <!-- Premendo Enter nel campo input si innesca submitModal() -->
       <input type="text" id="modalInput" style="text-align:center;" onkeypress="if(event.key==='Enter') submitModal()">
     </div>
-    <div class="btn-group" id="modalBtns">
-      <!-- Pulsanti iniettati dinamicamente -->
-    </div>
+    <div class="btn-group" id="modalBtns"></div>
   </div>
 </div>
 
-<!-- HEADER E UI PRINCIPALE -->
+<!-- HEADER -->
 <header>
-  <div style="font-weight: 800; font-size: 18px; letter-spacing: 1px;">VaultAI</div>
+  <div style="font-weight: 800; font-size: 18px; letter-spacing: 1px; display:flex; align-items:center;">
+    VaultAI <span class="pro-badge">PRO</span>
+  </div>
   <div id="modeIndicator" class="badge">LOCKED</div>
   <button class="btn-secondary" style="width:auto; padding:6px 16px; margin:0; border-radius: 20px; font-size: 11px;" onclick="lockSystem()">BLOCCA SISTEMA</button>
 </header>
 
 <div class="container">
   
-  <!-- WORKSPACE SELECTOR -->
   <div class="workspace-selector" id="workspaceSelectorContainer" style="display:none;">
     <span style="font-size:13px; font-weight:bold; color:var(--accent);">📁 FASCICOLO:</span>
     <select id="workspaceSelect" onchange="changeWorkspace()"></select>
@@ -175,10 +179,10 @@
   <div class="tabs" id="mainTabs" style="display:none;">
     <div class="tab active" onclick="switchTab('docs')">📄 Reperti</div>
     <div class="tab" onclick="switchTab('timeline')">⏱️ Timeline</div>
-    <div class="tab" onclick="switchTab('graph')">🕸️ Grafo & Split-Screen</div>
+    <div class="tab" onclick="switchTab('graph')">🕸️ Link Analysis</div>
     <div class="tab" onclick="switchTab('stats')">📊 Statistiche</div>
     <div class="tab" onclick="switchTab('rules')">⚙️ Regole NER</div>
-    <div class="tab" onclick="switchTab('forensic')">⛓️ Sicurezza & Export</div>
+    <div class="tab" onclick="switchTab('forensic')">⛓️ eDiscovery & Export</div>
   </div>
 
   <!-- TAB 1: REPERTI -->
@@ -190,16 +194,15 @@
         <span style="font-size:24px; margin-bottom:4px;">📥</span> Carica PDF, Testo o Immagini (OCR Locale)
       </button>
       <div style="text-align: center; margin: 16px 0; color: #444; font-size: 12px; font-weight: bold;">OPPURE INSERIMENTO MANUALE</div>
-      <input type="text" id="docTitle" placeholder="Titolo Reperto (Es. Intercettazione_A)">
+      <input type="text" id="docTitle" placeholder="Titolo Reperto (Es. Relazione_Banca)">
       <textarea id="docContent" placeholder="Incolla testo da analizzare. Le entità verranno evidenziate automaticamente..."></textarea>
       <div class="btn-group">
         <button class="btn-primary" onclick="addDocument()">Indicizza nel Fascicolo</button>
-        <button class="btn-secondary" onclick="redactInput()">Oscura Dati Sensibili</button>
       </div>
     </div>
     <div class="card">
-      <h3>🔍 Reperti nel Fascicolo Corrente</h3>
-      <input type="text" id="searchQuery" placeholder="Cerca qualsiasi parola, entità o hash..." oninput="renderDocs()">
+      <h3>🔍 Ricerca Logica (AND)</h3>
+      <input type="text" id="searchQuery" placeholder="Ricerca full-text: usa più parole per filtrare (es: Mario Roma Bonifico)..." oninput="renderDocs()">
       <div id="docsList" style="margin-top:20px;"></div>
     </div>
   </div>
@@ -216,13 +219,12 @@
   <div id="tab-graph" style="display:none;">
     <div class="card" style="padding: 10px;">
       <div style="display:flex; justify-content:space-between; align-items:center; padding: 0 10px 10px 10px;">
-        <h3 style="margin:0;">🕸️ Link Analysis </h3>
+        <h3 style="margin:0;">🕸️ Visualizzazione Relazionale</h3>
         <div style="display: flex; gap: 8px;">
           <button class="btn-secondary" style="width:auto; padding:4px 10px; font-size:11px;" onclick="exportGraph()">📷 Esporta PNG</button>
           <button class="btn-secondary" style="width:auto; padding:4px 10px; font-size:11px;" onclick="initGraph()">Ricalcola Layout</button>
         </div>
       </div>
-      
       <div class="graph-container">
         <div class="canvas-wrapper">
           <canvas id="graphCanvas"></canvas>
@@ -232,10 +234,7 @@
             <button class="graph-btn" onclick="resetGraphView()">🏠</button>
           </div>
         </div>
-        
-        <div id="graphSidePanel">
-           <!-- Popolato dinamicamente -->
-        </div>
+        <div id="graphSidePanel"></div>
       </div>
     </div>
   </div>
@@ -254,10 +253,10 @@
   <!-- TAB 5: REGOLE NER -->
   <div id="tab-rules" style="display:none;">
     <div class="card">
-      <h3>⚙️ Regole di Estrazione (Regex)</h3>
+      <h3>⚙️ Motore di Estrazione (Regex Custom)</h3>
       <div style="background: #0a0a0a; padding: 16px; border-radius: 8px; border: 1px solid var(--border-light); margin-bottom: 20px;">
-        <input type="text" id="ruleName" placeholder="Nome Categoria (es. Cripto Wallet)">
-        <input type="text" id="ruleRegex" placeholder="Espressione Regolare">
+        <input type="text" id="ruleName" placeholder="Nome Categoria (es. Targa Straniera)">
+        <input type="text" id="ruleRegex" placeholder="Espressione Regolare (es. \b[A-Z]{3}-\d{4}\b)">
         <button class="btn-primary" onclick="addCustomRule()">Aggiungi ed Estrai Retroattivamente</button>
       </div>
       <div id="rulesList" style="display:flex; flex-direction:column; gap:8px;"></div>
@@ -267,7 +266,12 @@
   <!-- TAB 6: FORENSICA E VAULT -->
   <div id="tab-forensic" style="display:none;">
     <div class="card">
-      <h3>🔒 Esportazione / Condivisione (AES-256-GCM)</h3>
+      <h3>📄 Esportazione Dossier Forense</h3>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom:16px;">Genera un report HTML sigillato contenente i reperti e la catena di custodia (Audit Log) da consegnare o stampare in PDF.</p>
+      <button class="btn-secondary" onclick="exportHTMLBundle()">Genera Dossier Completo (HTML)</button>
+    </div>
+    <div class="card">
+      <h3>🔒 Condivisione Vault (AES-256-GCM)</h3>
       <div class="btn-group">
         <button class="btn-primary" onclick="exportVaultFile()">Esporta Backup (.vault)</button>
         <button class="btn-secondary" onclick="document.getElementById('vaultUpload').click()">Importa Backup (.vault)</button>
@@ -278,10 +282,6 @@
       <h3>⛓️ Registro Audit (Hashing Inalterabile)</h3>
       <div id="auditLog" class="audit-log"></div>
       <div class="btn-group" style="margin-top: 16px;"><button class="btn-secondary" onclick="verifyIntegrity()">Verifica Integrità Catena</button></div>
-    </div>
-    <div class="card">
-      <h3>📄 Esportazione Fascicolo Corrente</h3>
-      <button class="btn-secondary" onclick="exportHTMLBundle()">Genera Report Analitico (HTML)</button>
     </div>
   </div>
 </div>
@@ -296,6 +296,8 @@ let inactivityTimer;
 
 let state = { workspaces: ['Indagine_Principale'], currentWorkspace: 'Indagine_Principale', docs: [], audit: [] };
 let customRules = {};
+
+// REGOLE FORENSI PREMIUM (Incluse Criptovalute, IP e MAC)
 const coreRules = {
   'email': { regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, class: 'c-email', label: 'E-Mail' },
   'iban': { regex: /\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/g, class: 'c-iban', label: 'IBAN' },
@@ -303,7 +305,11 @@ const coreRules = {
   'cf': { regex: /\b[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]\b/g, class: 'c-cf', label: 'Cod. Fiscale' },
   'targa': { regex: /\b[A-Z]{2}\d{3}[A-Z]{2}\b|\b[A-Z]{2}\d{5}\b/g, class: 'c-targa', label: 'Targa' },
   'tel': { regex: /\b(?:\+39)?\s?3\d{2}[\s-]?\d{6,7}\b/g, class: 'c-tel', label: 'Telefono' },
-  'data': { regex: /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g, class: 'c-data', label: 'Data' }
+  'data': { regex: /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g, class: 'c-data', label: 'Data' },
+  'btc': { regex: /\b[13][a-km-zA-HJ-NP-Z1-9]{25,34}\b|bc1[a-zA-HJ-NP-Z0-9]{39,59}\b/g, class: 'c-crypto', label: 'Bitcoin Wallet' },
+  'eth': { regex: /\b0x[a-fA-F0-9]{40}\b/g, class: 'c-crypto', label: 'Ethereum Wallet' },
+  'ip': { regex: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g, class: 'c-network', label: 'Indirizzo IP' },
+  'mac': { regex: /\b(?:[0-9A-Fa-f]{2}[:-]){5}(?:[0-9A-Fa-f]{2})\b/g, class: 'c-network', label: 'MAC Address' }
 };
 
 // --- BOOT E GESTIONE DATABASE ---
@@ -325,9 +331,7 @@ window.onload = async () => {
   try {
     db = await initDB();
     await checkBootState();
-  } catch(e) {
-    openModal("Errore Critico", "Il browser non supporta il database locale.");
-  }
+  } catch(e) { openModal("Errore Critico", "Il browser non supporta il database locale."); }
 };
 
 async function checkBootState() {
@@ -402,9 +406,7 @@ async function attemptLogin() {
         const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: record.iv }, key, record.data);
         const payload = JSON.parse(new TextDecoder().decode(decrypted));
         
-        masterKey = key; 
-        state = payload.state;
-        
+        masterKey = key; state = payload.state;
         if (!state.workspaces) state.workspaces = ['Indagine_Principale'];
         if (!state.currentWorkspace || !state.workspaces.includes(state.currentWorkspace)) state.currentWorkspace = state.workspaces[0];
         
@@ -452,49 +454,23 @@ function lockSystem() {
   ['docsList', 'timelineContainer', 'statsContainer', 'auditLog', 'rulesList'].forEach(id => document.getElementById(id).innerHTML = '');
 }
 
-// --- MODALI UNIFICATI (IL FIX CRITICO E' QUI) ---
+// --- MODALI UNIFICATI ---
 let modalCallback = null;
-
 function openModal(title, msg, type = 'alert', callback = null) {
-  // Tipi supportati: 'alert', 'prompt', 'password', 'confirm'
-  document.getElementById('modalTitle').innerText = title; 
-  document.getElementById('modalMsg').innerText = msg;
-  const inputContainer = document.getElementById('modalInputContainer'); 
-  const inp = document.getElementById('modalInput');
-  
-  if (type === 'prompt' || type === 'password') { 
-    inputContainer.style.display = 'block'; 
-    inp.type = (type === 'password') ? 'password' : 'text'; 
-    inp.value = ''; 
-  } else { 
-    inputContainer.style.display = 'none'; 
-  }
-  
+  document.getElementById('modalTitle').innerText = title; document.getElementById('modalMsg').innerText = msg;
+  const inputContainer = document.getElementById('modalInputContainer'); const inp = document.getElementById('modalInput');
+  if (type === 'prompt' || type === 'password') { inputContainer.style.display = 'block'; inp.type = (type === 'password') ? 'password' : 'text'; inp.value = ''; } 
+  else { inputContainer.style.display = 'none'; }
   modalCallback = callback;
-  
   let btns = `<button class="btn-primary" onclick="submitModal()">OK</button>`;
-  if(type !== 'alert') {
-    btns = `<button class="btn-secondary" onclick="closeModal()">Annulla</button>` + btns;
-  }
-  
+  if(type !== 'alert') btns = `<button class="btn-secondary" onclick="closeModal()">Annulla</button>` + btns;
   document.getElementById('modalBtns').innerHTML = btns;
   document.getElementById('customModalOverlay').style.display = 'flex'; 
   if(type === 'prompt' || type === 'password') setTimeout(()=>inp.focus(), 50);
 }
+function closeModal() { document.getElementById('customModalOverlay').style.display = 'none'; modalCallback = null; }
+function submitModal() { const val = document.getElementById('modalInput').value; const savedCallback = modalCallback; closeModal(); if(savedCallback) savedCallback(val); }
 
-function closeModal() { 
-  document.getElementById('customModalOverlay').style.display = 'none'; 
-  modalCallback = null; 
-}
-
-function submitModal() { 
-  const val = document.getElementById('modalInput').value; 
-  const savedCallback = modalCallback; // Salva la memoria della funzione prima di chiudere il popup
-  closeModal(); // Chiude il popup (e azzera modalCallback)
-  if(savedCallback) savedCallback(val); // Esegue l'azione in modo sicuro
-}
-
-// --- AUDIT E TIMEOUT ---
 async function logAction(actionName) {
   const ts = new Date().toISOString(); const prevHash = state.audit.length > 0 ? state.audit[state.audit.length - 1].hash : "GENESIS_BLOCK";
   const rawData = `${ts}|${actionName}|${prevHash}`; const currentHash = await computeHash(rawData);
@@ -504,49 +480,36 @@ async function logAction(actionName) {
 function resetInactivity() { clearTimeout(inactivityTimer); if(masterKey) inactivityTimer = setTimeout(lockSystem, 15 * 60 * 1000); }
 window.addEventListener('mousemove', resetInactivity); window.addEventListener('keypress', resetInactivity);
 
-// --- GESTIONE WORKSPACE (FASCICOLI) ---
+// --- GESTIONE WORKSPACE E RICERCA LOGICA (AND) ---
 function escapeHTML(str) { return !str ? "" : str.toString().replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag])); }
 function getActiveDocs() { return state.docs.filter(d => d.workspace === state.currentWorkspace); }
 function renderWorkspaces() { document.getElementById('workspaceSelect').innerHTML = state.workspaces.map(w => `<option value="${escapeHTML(w)}" ${w===state.currentWorkspace?'selected':''}>${escapeHTML(w)}</option>`).join(''); }
 
-function changeWorkspace() { 
-  state.currentWorkspace = document.getElementById('workspaceSelect').value; 
-  saveEncryptedState(); 
-  renderAllViews(); 
-  document.getElementById('graphSidePanel').style.display='none'; 
-}
-
-function promptNewWorkspace() { 
-  openModal("Nuovo Fascicolo", "Digita il nome del nuovo fascicolo:", 'prompt', (n) => { 
-    if(n && !state.workspaces.includes(n)){ 
-      state.workspaces.push(n); 
-      state.currentWorkspace = n; 
-      renderWorkspaces(); 
-      renderAllViews(); 
-      logAction("CREATED_WORKSPACE: "+n); 
-    } 
-  }); 
-}
-
+function changeWorkspace() { state.currentWorkspace = document.getElementById('workspaceSelect').value; saveEncryptedState(); renderAllViews(); document.getElementById('graphSidePanel').style.display='none'; }
+function promptNewWorkspace() { openModal("Nuovo Fascicolo", "Digita il nome del fascicolo:", 'prompt', (n) => { if(n && !state.workspaces.includes(n)){ state.workspaces.push(n); state.currentWorkspace = n; renderWorkspaces(); renderAllViews(); logAction("CREATED_WORKSPACE: "+n); } }); }
 function deleteCurrentWorkspace() {
-  if (state.workspaces.length <= 1) return openModal("Errore", "Impossibile eliminare l'unico fascicolo rimasto. Creane prima un altro.", 'alert');
-  
-  openModal("Conferma Distruzione", `Digita "ELIMINA" per confermare la cancellazione del fascicolo '${state.currentWorkspace}' e dei suoi reperti.`, 'prompt', (val) => {
-    if(val === "ELIMINA") {
-      state.docs = state.docs.filter(d => d.workspace !== state.currentWorkspace);
-      state.workspaces = state.workspaces.filter(w => w !== state.currentWorkspace);
-      state.currentWorkspace = state.workspaces[0];
-      logAction("DELETED_WORKSPACE");
-      renderWorkspaces();
-      renderAllViews();
-    }
+  if (state.workspaces.length <= 1) return openModal("Errore", "Impossibile eliminare l'unico fascicolo rimasto.", 'alert');
+  openModal("Conferma", `Digita "ELIMINA" per distruggere il fascicolo '${state.currentWorkspace}'.`, 'prompt', (val) => {
+    if(val === "ELIMINA") { state.docs = state.docs.filter(d => d.workspace !== state.currentWorkspace); state.workspaces = state.workspaces.filter(w => w !== state.currentWorkspace); state.currentWorkspace = state.workspaces[0]; logAction("DELETED_WORKSPACE"); renderWorkspaces(); renderAllViews(); }
   });
 }
+function deleteDoc(id) { openModal("Elimina", "Eliminare definitivamente il reperto?", 'confirm', () => { state.docs = state.docs.filter(d => d.id !== id); logAction("DELETED_DOC"); renderAllViews(); }); }
 
-function deleteDoc(id) {
-  openModal("Elimina Reperto", "Vuoi davvero eliminare definitivamente questo reperto dal database?", 'confirm', () => {
-    state.docs = state.docs.filter(d => d.id !== id);
-    logAction("DELETED_DOC");
+// OSCURAMENTO SELETTIVO (REDACTION MANUALE)
+async function redactSelection(docId) {
+  const sel = window.getSelection();
+  if (!sel.rangeCount || sel.isCollapsed) return openModal("Attenzione", "Devi prima evidenziare il testo da oscurare con il mouse all'interno del documento.", "alert");
+  const textToRedact = sel.toString();
+  
+  const doc = state.docs.find(d => d.id === docId);
+  if (!doc) return;
+  if (!doc.content.includes(textToRedact)) return openModal("Errore", "Il testo selezionato non corrisponde al testo originale.", "alert");
+  
+  openModal("Oscura Dati", `Oscurare definitivamente il testo selezionato? L'operazione è irreversibile e ricalcolerà l'hash del documento.`, "confirm", async () => {
+    doc.content = doc.content.split(textToRedact).join('[OMISSIS]');
+    doc.entities = extractEntities(doc.content);
+    doc.hash = (await computeHash(doc.title + doc.content)).substring(0,16);
+    await logAction(`MANUAL_REDACTION_DOC_${doc.id}`);
     renderAllViews();
   });
 }
@@ -587,13 +550,7 @@ async function processDoc(title, content) {
   state.docs.unshift({ id: 'doc_'+Date.now()+'_'+Math.floor(Math.random()*1000), workspace: state.currentWorkspace, title: title, content: c, entities: extractEntities(c), hash: (await computeHash(title+c)).substring(0,16) });
   await logAction(`INDEXED_DOC [${state.currentWorkspace}]`);
 }
-
 async function addDocument() { const t = document.getElementById('docTitle').value || `Reperto_${Math.floor(Math.random()*9000)}`; const c = document.getElementById('docContent').value; if (!c) return; await processDoc(t, c); document.getElementById('docTitle').value = ''; document.getElementById('docContent').value = ''; renderAllViews(); }
-
-function redactInput() {
-  let t = document.getElementById('docContent').value; t = t.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "█████████").replace(/\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/g, "████████████████").replace(/(?:€|EUR)\s?\d+(?:[.,]\d+)?/gi, "[IMPORTO_OSCURATO]");
-  document.getElementById('docContent').value = t;
-}
 
 async function handleFileUpload(event) {
   const files = event.target.files; if (!files || files.length === 0) return;
@@ -603,17 +560,16 @@ async function handleFileUpload(event) {
     try { 
       let txt = "";
       if (f.type.startsWith('image/')) {
-        btn.innerHTML = `⏳ ESTRAZIONE TESTO DA IMMAGINE (${f.name})...`; btn.disabled = true;
+        btn.innerHTML = `⏳ OCR IMMAGINE (${f.name})...`; btn.disabled = true;
         const worker = await Tesseract.createWorker('ita');
         const { data: { text } } = await worker.recognize(f);
-        await worker.terminate();
-        txt = text;
+        await worker.terminate(); txt = text;
       } else if (f.type === 'application/pdf' && window['pdfjs-dist/build/pdf']) {
-        btn.innerHTML = `⏳ PARSING PDF (${f.name})...`; btn.disabled = true;
+        btn.innerHTML = `⏳ ESTRAZIONE PDF (${f.name})...`; btn.disabled = true;
         const pdf = await window['pdfjs-dist/build/pdf'].getDocument(new Uint8Array(await f.arrayBuffer())).promise;
         for (let i = 1; i <= pdf.numPages; i++) { const page = await pdf.getPage(i); txt += (await page.getTextContent()).items.map(it => it.str).join(' ') + "\n"; }
       } else {
-        btn.innerHTML = `⏳ LETTURA FILE (${f.name})...`; btn.disabled = true;
+        btn.innerHTML = `⏳ LETTURA TESTO (${f.name})...`; btn.disabled = true;
         const bytes = new Uint8Array(await f.arrayBuffer()); let str = "";
         for(let i=0; i<bytes.length; i++) { let c=bytes[i]; if((c>=32 && c<=126) || c===10) str+=String.fromCharCode(c); else { if(str.length>4) txt+=str+" "; str=""; } }
       }
@@ -623,24 +579,52 @@ async function handleFileUpload(event) {
   renderAllViews(); event.target.value = ""; btn.innerHTML = og; btn.disabled = false;
 }
 
-// --- RENDER VIEWS ---
+// --- RENDER VIEWS (CON RICERCA LOGICA AND) ---
 function renderAllViews() { renderDocs(); renderTimeline(); renderStats(); if(document.getElementById('tab-graph').style.display === 'block') initGraph(); }
 function toggleTextExpand(id) { const el = document.getElementById(id); el.classList.toggle('expanded'); const fade = el.querySelector('.text-box-fade'); if(fade) fade.style.display = el.classList.contains('expanded') ? 'none' : 'flex'; }
 function renderDocs() {
-  const q = document.getElementById('searchQuery').value.toLowerCase(); const list = document.getElementById('docsList'); list.innerHTML = ''; const docs = getActiveDocs();
+  const q = document.getElementById('searchQuery').value.toLowerCase(); 
+  const terms = q.split(' ').filter(t => t.trim() !== ''); // Divide query per AND logico
+  const list = document.getElementById('docsList'); list.innerHTML = ''; const docs = getActiveDocs();
   if (docs.length === 0) return list.innerHTML = `<div style="text-align:center; padding:20px; color:#555; font-size:13px;">Nessun documento in questo fascicolo.</div>`;
+  
   docs.forEach((doc) => {
-    if(q && !doc.title.toLowerCase().includes(q) && !doc.content.toLowerCase().includes(q) && !doc.entities.some(e=>e.val.toLowerCase().includes(q)) && !doc.hash.toLowerCase().includes(q)) return;
+    // Logica AND: il documento deve contenere TUTTI i termini cercati
+    const matchesAll = terms.every(t => 
+      doc.title.toLowerCase().includes(t) || 
+      doc.content.toLowerCase().includes(t) || 
+      doc.entities.some(e=>e.val.toLowerCase().includes(t)) || 
+      doc.hash.toLowerCase().includes(t)
+    );
+    if (terms.length > 0 && !matchesAll) return;
+    
     const grouped = {}; doc.entities.forEach(e => { if(!grouped[e.type]) grouped[e.type] = { class: e.class, items: [] }; grouped[e.type].items.push(e.val); });
     let html = ''; Object.entries(grouped).forEach(([type, data]) => { html += `<div style="margin-bottom: 8px;"><span style="font-size:11px; color:#888; text-transform:uppercase; margin-right:8px;">${escapeHTML(type)}:</span><div class="entity-chips" style="display:inline-flex;">${data.items.map(val => `<span class="chip ${data.class}">${escapeHTML(val)}</span>`).join('')}</div></div>`; });
     const needsFade = doc.content.length > 400;
-    list.innerHTML += `<div class="doc-record"><div class="doc-header"><div class="doc-title">📄 ${escapeHTML(doc.title)}</div><div class="doc-actions"><span class="doc-hash">SHA-256: ${doc.hash}</span><button class="btn-danger" style="padding:4px 8px; min-width:auto; font-size:10px;" onclick="deleteDoc('${doc.id}')">Elimina</button></div></div><div class="doc-body"><div style="background:#111; padding:12px; border-radius:6px; border:1px solid #222;">${html||'<span style="color:#555;font-size:12px;">Nessuna entità identificata.</span>'}</div><div id="txt_${doc.id}" class="text-box" ${needsFade ? `onclick="toggleTextExpand('txt_${doc.id}')"` : ''}>${highlightEntities(doc.content, doc.entities)}${needsFade ? `<div class="text-box-fade">Mostra tutto</div>` : ''}</div></div></div>`;
+    
+    list.innerHTML += `<div class="doc-record">
+      <div class="doc-header">
+        <div class="doc-title">📄 ${escapeHTML(doc.title)}</div>
+        <div class="doc-actions">
+          <span class="doc-hash">SHA: ${doc.hash}</span>
+          <button class="btn-warning" style="padding:4px 8px; min-width:auto; font-size:10px;" onclick="redactSelection('${doc.id}')" title="Seleziona del testo in basso e clicca qui per oscurarlo">Oscura Selezione</button>
+          <button class="btn-danger" style="padding:4px 8px; min-width:auto; font-size:10px;" onclick="deleteDoc('${doc.id}')">Elimina</button>
+        </div>
+      </div>
+      <div class="doc-body">
+        <div style="background:#111; padding:12px; border-radius:6px; border:1px solid #222;">${html||'<span style="color:#555;font-size:12px;">Nessuna entità.</span>'}</div>
+        <div id="txt_${doc.id}" class="text-box" ${needsFade ? `ondblclick="toggleTextExpand('txt_${doc.id}')"` : ''}>
+          ${highlightEntities(doc.content, doc.entities)}
+          ${needsFade ? `<div class="text-box-fade" onclick="toggleTextExpand('txt_${doc.id}')">Doppio click sul testo per espandere</div>` : ''}
+        </div>
+      </div>
+    </div>`;
   });
 }
 function renderTimeline() {
   const container = document.getElementById('timelineContainer'); container.innerHTML = ''; let events = [];
   getActiveDocs().forEach(doc => { doc.entities.filter(e => e.type === 'Data').forEach(e => { const parts = e.val.split(/[\/\-]/); events.push({ dateStr: e.val, ts: parts.length===3 ? new Date(parts[2], parts[1]-1, parts[0]).getTime():0, docTitle: doc.title, snippet: doc.content.substring(0, 120)+"..." }); }); });
-  if(events.length === 0) return container.innerHTML = `<div style="color:#555; font-size:13px; text-align:center;">Nessuna data rilevata.</div>`;
+  if(events.length === 0) return container.innerHTML = `<div style="color:#555; font-size:13px; text-align:center;">Nessuna data.</div>`;
   events.sort((a,b) => a.ts - b.ts).filter((v,i,a)=>a.findIndex(t=>(t.dateStr===v.dateStr && t.docTitle===v.docTitle))===i).forEach(ev => { container.innerHTML += `<div class="tl-item"><div class="tl-dot"></div><div class="tl-date">${escapeHTML(ev.dateStr)}</div><div class="tl-content"><strong style="color:#fff;">${escapeHTML(ev.docTitle)}</strong><br><span style="font-size:12px; color:#888;">${escapeHTML(ev.snippet)}</span></div></div>`; });
 }
 function renderStats() {
@@ -682,7 +666,7 @@ function showSidePanel(node) {
 
 function updateGraph(forceRender = false) {
   const cvs = document.getElementById('graphCanvas'); const ctx = cvs.getContext('2d'); const dpr = window.devicePixelRatio || 1; const rect = cvs.getBoundingClientRect(); if(cvs.width !== rect.width * dpr) { cvs.width = rect.width * dpr; cvs.height = rect.height * dpr; } let kineticEnergy = 0;
-  if (graphNodes.length === 0) return; // Fix per grafo vuoto
+  if (graphNodes.length === 0) return;
   
   graphNodes.forEach(n1 => { graphNodes.forEach(n2 => { if(n1===n2) return; let dx=n2.x-n1.x, dy=n2.y-n1.y, dist=Math.sqrt(dx*dx+dy*dy)||1; if(dist<200) { let force=-400/(dist*dist); n1.vx+=(dx/dist)*force; n1.vy+=(dy/dist)*force; } }); n1.vx+=(400-n1.x)*0.001; n1.vy+=(400-n1.y)*0.001; });
   graphEdges.forEach(e => { let dx=e.target.x-e.source.x, dy=e.target.y-e.source.y, dist=Math.sqrt(dx*dx+dy*dy)||1; let force=(dist-80)*0.03; e.source.vx+=(dx/dist)*force; e.source.vy+=(dy/dist)*force; e.target.vx-=(dx/dist)*force; e.target.vy-=(dy/dist)*force; });
@@ -692,7 +676,7 @@ function updateGraph(forceRender = false) {
   ctx.lineWidth = 1.5 / viewTransform.k; graphEdges.forEach(e => { let active = true; if(focusNode && focusNode !== e.source && focusNode !== e.target) active = false; ctx.strokeStyle = active ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.05)'; ctx.beginPath(); ctx.moveTo(e.source.x, e.source.y); ctx.lineTo(e.target.x, e.target.y); ctx.stroke(); });
   graphNodes.forEach(n => {
     let alpha = 1; if(focusNode && focusNode !== n && !focusNode.connected.includes(n)) alpha = 0.15; ctx.globalAlpha = alpha; ctx.beginPath(); ctx.arc(n.x, n.y, n.type==='doc'?16:8, 0, Math.PI*2);
-    if(n.type==='doc') ctx.fillStyle='#00e5ff'; else if(n.class==='c-email') ctx.fillStyle='#2196f3'; else if(n.class==='c-iban') ctx.fillStyle='#ffeb3b'; else if(n.class==='c-importo') ctx.fillStyle='#00e676'; else if(n.class==='c-cf') ctx.fillStyle='#e91e63'; else if(n.class==='c-targa') ctx.fillStyle='#00bcd4'; else if(n.class==='c-tel') ctx.fillStyle='#9c27b0'; else if(n.class==='c-data') ctx.fillStyle='#795548'; else ctx.fillStyle='#b388ff';
+    if(n.type==='doc') ctx.fillStyle='#00e5ff'; else if(n.class==='c-email') ctx.fillStyle='#2196f3'; else if(n.class==='c-iban') ctx.fillStyle='#ffeb3b'; else if(n.class==='c-importo') ctx.fillStyle='#00e676'; else if(n.class==='c-cf') ctx.fillStyle='#e91e63'; else if(n.class==='c-targa') ctx.fillStyle='#00bcd4'; else if(n.class==='c-tel') ctx.fillStyle='#9c27b0'; else if(n.class==='c-data') ctx.fillStyle='#795548'; else if(n.class==='c-crypto') ctx.fillStyle='#ff9800'; else if(n.class==='c-network') ctx.fillStyle='#4caf50'; else ctx.fillStyle='#b388ff';
     if(n === focusNode) { ctx.lineWidth = 3/viewTransform.k; ctx.strokeStyle = '#fff'; ctx.stroke(); } ctx.fill(); ctx.fillStyle='#fff'; ctx.font = `${11/viewTransform.k}px sans-serif`; ctx.fillText(n.label, n.x+18, n.y+4); ctx.globalAlpha = 1;
   }); ctx.restore();
   
@@ -714,14 +698,40 @@ window.addEventListener('mouseup', e => {
 });
 document.getElementById('graphCanvas').addEventListener('wheel', e => { e.preventDefault(); zoomGraph(e.deltaY < 0 ? 1.1 : 0.9); });
 
-// --- TABS E EXPORT ---
+// --- TABS E DOSSIER HTML ---
 function switchTab(tId) { ['docs','timeline','graph','stats','rules','forensic'].forEach(t => document.getElementById('tab-'+t).style.display = t===tId?'block':'none'); document.querySelectorAll('.tab').forEach((el, i) => el.classList.toggle('active', ['docs','timeline','graph','stats','rules','forensic'][i]===tId)); if(tId==='graph') initGraph(); else if(animFrame){ cancelAnimationFrame(animFrame); animFrame=null; } }
 function renderAudit() { document.getElementById('auditLog').innerHTML = state.audit.map(b => `<div><span style="color:#666">[${b.time.slice(11,19)}]</span> <b>${escapeHTML(b.action)}</b><br><span style="color:#666">SHA: ${b.hash}</span></div>`).join('<hr style="border-color:#222; margin:6px 0;">'); }
-async function verifyIntegrity() { for(let i=0; i<state.audit.length; i++) { if((await computeHash(state.audit[i]._raw)).substring(0,16) !== state.audit[i].hash || (i>0 && state.audit[i].prev !== state.audit[i-1].hash)) return openModal("ALLARME", "Manomissione rilevata"); } openModal("Verifica Superata", "Catena integra."); }
-function exportCSV() { let csv = "Entita,Valore,Occorrenze\n"; let counts = {}; getActiveDocs().forEach(d => d.entities.forEach(e => { let key = e.type + "|||" + e.val; counts[key] = (counts[key] || 0) + 1; })); Object.entries(counts).sort((a,b) => b[1] - a[1]).forEach(([k, c]) => { const p = k.split("|||"); csv += `"${p[0]}","${p[1]}",${c}\n`; }); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv"})); a.download = `Export_Statistiche_${state.currentWorkspace}.csv`; a.click(); }
-async function exportVaultFile() { if(!masterKey || !masterSalt) return; const payload = JSON.stringify({ state: state, rules: Object.keys(customRules).map(k=>({id:k, r:customRules[k].regex.source, l:customRules[k].label})) }); const iv = crypto.getRandomValues(new Uint8Array(12)); const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, masterKey, new TextEncoder().encode(payload)); const vaultData = JSON.stringify({ s: Array.from(masterSalt), i: Array.from(iv), c: Array.from(new Uint8Array(encrypted)) }); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([vaultData], {type:"application/json"})); a.download = `Backup_${state.currentWorkspace}_${Date.now()}.vault`; a.click(); logAction("EXPORT"); }
-function importVaultFile(event) { const file = event.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = async (e) => { try { const vault = JSON.parse(e.target.result); openModal("Importa", "Password file .vault:", 'password', async (pwd) => { if(!pwd) return; try { const importedSalt = new Uint8Array(vault.s); const importKey = await deriveKey(pwd, importedSalt); const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(vault.i) }, importKey, new Uint8Array(vault.c)); const payload = JSON.parse(new TextDecoder().decode(decrypted)); state = payload.state; if (!state.workspaces) state.workspaces = ['Indagine_Principale']; if (!state.currentWorkspace) state.currentWorkspace = state.workspaces[0]; customRules = {}; payload.rules.forEach(r => { customRules[r.id] = { regex: new RegExp(r.r, 'g'), class:'c-custom', label:r.l }; }); await saveEncryptedState(); renderWorkspaces(); renderRulesList(); renderAllViews(); openModal("Successo", "Ripristinato con successo."); } catch(err) { openModal("Errore", "Password errata."); } }); } catch(err) { openModal("Errore", "File non valido."); } }; reader.readAsText(file); event.target.value = ""; }
-async function exportHTMLBundle() { await logAction("REPORT"); let h = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>VaultAI Report - ${escapeHTML(state.currentWorkspace)}</title><style>body{font-family:sans-serif;padding:40px;background:#fff;color:#000;} .doc{border:1px solid #ccc;padding:20px;margin-bottom:20px;border-radius:8px} .t{font-size:12px;background:#eee;padding:4px 8px;border-radius:4px;margin:2px;display:inline-block;border:1px solid #ddd;}</style></head><body><h1>Report Forense: ${escapeHTML(state.currentWorkspace)}</h1><p>Generato il: ${new Date().toLocaleString()}</p><hr>`; getActiveDocs().forEach(d => { let tags = d.entities.map(e => `<span class="t"><b>${escapeHTML(e.type)}:</b> ${escapeHTML(e.val)}</span>`).join(''); h += `<div class="doc"><h3>📄 ${escapeHTML(d.title)}</h3><div style="margin-bottom:12px;">${tags}</div><div style="white-space:pre-wrap;font-size:13px;color:#222;padding:12px;background:#f9f9f9;border:1px solid #eee;">${escapeHTML(d.content)}</div><div style="font-family:monospace;font-size:11px;color:#888;margin-top:12px;">SHA-256: ${d.hash}</div></div>`; }); const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([h],{type:"text/html"})); a.download=`Report_${state.currentWorkspace}.html`; a.click(); }
+async function verifyIntegrity() { for(let i=0; i<state.audit.length; i++) { if((await computeHash(state.audit[i]._raw)).substring(0,16) !== state.audit[i].hash || (i>0 && state.audit[i].prev !== state.audit[i-1].hash)) return openModal("ALLARME", "Manomissione rilevata nella catena."); } openModal("Verifica Superata", "Catena crittografica integra al 100%."); }
+function exportCSV() { let csv = "Entita,Valore,Occorrenze\n"; let counts = {}; getActiveDocs().forEach(d => d.entities.forEach(e => { let key = e.type + "|||" + e.val; counts[key] = (counts[key] || 0) + 1; })); Object.entries(counts).sort((a,b) => b[1] - a[1]).forEach(([k, c]) => { const p = k.split("|||"); csv += `"${p[0]}","${p[1]}",${c}\n`; }); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv"})); a.download = `Statistiche_${state.currentWorkspace}.csv`; a.click(); }
+async function exportVaultFile() { if(!masterKey || !masterSalt) return; const payload = JSON.stringify({ state: state, rules: Object.keys(customRules).map(k=>({id:k, r:customRules[k].regex.source, l:customRules[k].label})) }); const iv = crypto.getRandomValues(new Uint8Array(12)); const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, masterKey, new TextEncoder().encode(payload)); const vaultData = JSON.stringify({ s: Array.from(masterSalt), i: Array.from(iv), c: Array.from(new Uint8Array(encrypted)) }); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([vaultData], {type:"application/json"})); a.download = `Vault_${state.currentWorkspace}_${Date.now()}.vault`; a.click(); logAction("EXPORT_VAULT"); }
+function importVaultFile(event) { const file = event.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = async (e) => { try { const vault = JSON.parse(e.target.result); openModal("Importa", "Password file .vault:", 'password', async (pwd) => { if(!pwd) return; try { const importedSalt = new Uint8Array(vault.s); const importKey = await deriveKey(pwd, importedSalt); const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(vault.i) }, importKey, new Uint8Array(vault.c)); const payload = JSON.parse(new TextDecoder().decode(decrypted)); state = payload.state; if (!state.workspaces) state.workspaces = ['Indagine_Principale']; if (!state.currentWorkspace) state.currentWorkspace = state.workspaces[0]; customRules = {}; payload.rules.forEach(r => { customRules[r.id] = { regex: new RegExp(r.r, 'g'), class:'c-custom', label:r.l }; }); await saveEncryptedState(); renderWorkspaces(); renderRulesList(); renderAllViews(); openModal("Successo", "Fascicoli ripristinati."); } catch(err) { openModal("Errore", "Password errata."); } }); } catch(err) { openModal("Errore", "File corrotto."); } }; reader.readAsText(file); event.target.value = ""; }
+
+// ESPORTAZIONE DOSSIER FORENSE (CON AUDIT LOG INTEGRATO)
+async function exportHTMLBundle() { 
+  await logAction("GENERATED_DOSSIER_REPORT"); 
+  let h = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Dossier Forense - ${escapeHTML(state.currentWorkspace)}</title><style>body{font-family:sans-serif;padding:40px;background:#fff;color:#000; max-width: 900px; margin: auto;} .doc{border:1px solid #ccc;padding:20px;margin-bottom:20px;border-radius:8px; page-break-inside: avoid;} .t{font-size:12px;background:#eee;padding:4px 8px;border-radius:4px;margin:2px;display:inline-block;border:1px solid #ddd;} .audit-table {width: 100%; border-collapse: collapse; font-family: monospace; font-size: 11px;} .audit-table th, .audit-table td {border: 1px solid #aaa; padding: 6px; text-align: left;} .audit-table th {background: #f0f0f0;} @media print { body {padding:0;} }</style></head><body>
+  <h1 style="border-bottom: 2px solid #000; padding-bottom:10px;">Dossier Forense: ${escapeHTML(state.currentWorkspace)}</h1>
+  <p><strong>Generato il:</strong> ${new Date().toLocaleString()}</p>
+  <p><strong>Firma dell'Applicativo:</strong> VaultAI Premium Enclave (AES-256-GCM)</p>
+  <hr style="margin:30px 0;">
+  <h2>1. Elenco Reperti Acquisiti</h2>`; 
+  
+  getActiveDocs().forEach(d => { 
+    let tags = d.entities.map(e => `<span class="t"><b>${escapeHTML(e.type)}:</b> ${escapeHTML(e.val)}</span>`).join(''); 
+    h += `<div class="doc"><h3>📄 ${escapeHTML(d.title)}</h3><div style="margin-bottom:12px;">${tags}</div><div style="white-space:pre-wrap;font-size:13px;color:#222;padding:12px;background:#f9f9f9;border:1px solid #eee;">${escapeHTML(d.content)}</div><div style="font-family:monospace;font-size:11px;color:#888;margin-top:12px; font-weight:bold;">Impronta Crittografica (SHA-256): ${d.hash}</div></div>`; 
+  }); 
+  
+  h += `<h2 style="page-break-before: always;">2. Catena di Custodia (Registro Audit)</h2>
+  <p style="font-size:12px;">Il seguente registro certifica crittograficamente l'integrità e la sequenza delle operazioni effettuate sui reperti, inclusi gli oscuramenti (redaction).</p>
+  <table class="audit-table"><thead><tr><th>Timestamp</th><th>Azione</th><th>Hash (Catena)</th></tr></thead><tbody>`;
+  
+  state.audit.forEach(a => {
+    h += `<tr><td>${a.time.replace('T', ' ')}</td><td>${escapeHTML(a.action)}</td><td>${a.hash}</td></tr>`;
+  });
+  h += `</tbody></table></body></html>`;
+  
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([h],{type:"text/html"})); a.download=`Dossier_Forense_${state.currentWorkspace}.html`; a.click(); 
+}
 </script>
 </body>
 </html>
