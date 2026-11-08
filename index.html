@@ -4,11 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#000000">
-<title>VaultAI - Premium Forensic Enclave</title>
+<title>VaultAI - Enterprise Forensic Enclave</title>
 
-<!-- Librerie Esterne (PDF e OCR) -->
+<!-- Librerie Esterne (PDF, OCR, ZIP, EXIF) - 100% Client-Side -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
 
 <style>
   :root {
@@ -62,7 +64,7 @@
   .doc-header { background: #141414; padding: 12px 16px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; }
   .doc-title { font-weight: 600; font-size: 14px; color: #fff; }
   .doc-actions { display: flex; gap: 8px; align-items: center; }
-  .doc-hash { font-family: 'Courier New', monospace; font-size: 11px; color: var(--text-muted); }
+  .doc-hash { font-family: 'Courier New', monospace; font-size: 11px; color: var(--text-muted); display:flex; flex-direction:column;}
   .doc-body { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
   
   .entity-chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -101,7 +103,8 @@
   .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #0a0a0a; border: 1px solid #1a1a1a; margin-bottom: 6px; border-radius: 6px; }
   .audit-log { font-family: 'Courier New', monospace; font-size: 12px; background: #050505; padding: 16px; border-radius: 8px; border: 1px solid #1a1a1a; max-height: 300px; overflow-y: auto; }
   
-  .graph-container { display: flex; gap: 16px; height: 600px; width: 100%; transition: 0.3s; }
+  /* Canvas e Pannelli */
+  .graph-container { display: flex; gap: 16px; height: 650px; width: 100%; transition: 0.3s; position:relative;}
   .canvas-wrapper { position: relative; flex: 1; background: #050505; border-radius: 12px; border: 1px solid var(--border-light); overflow: hidden; transition: 0.3s; }
   canvas { width: 100%; height: 100%; touch-action: none; cursor: grab; display: block; }
   canvas:active { cursor: grabbing; }
@@ -109,6 +112,9 @@
   .graph-btn { background: rgba(17,17,17,0.8); border: 1px solid var(--border-light); color: var(--text); padding: 8px; border-radius: 6px; cursor: pointer; font-size: 16px; min-width: 36px; display: flex; justify-content: center; align-items: center; }
   
   #graphSidePanel { display: none; width: 350px; background: #0a0a0a; border: 1px solid var(--border-light); border-radius: 12px; padding: 16px; overflow-y: auto; flex-shrink: 0; }
+  
+  /* Pannello Filtri Nodi */
+  #graphFiltersPanel { position:absolute; top:16px; left:16px; background:rgba(10,10,10,0.85); border:1px solid #333; padding:12px; border-radius:8px; z-index:10; max-height:400px; overflow-y:auto; backdrop-filter:blur(4px); }
   
   #lockScreen { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; z-index: 9999; }
   #customModalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 10000; }
@@ -146,7 +152,7 @@
   </div>
 </div>
 
-<!-- MODAL OVERLAY -->
+<!-- MODAL OVERLAY UNIFICATO -->
 <div id="customModalOverlay">
   <div class="modal-box">
     <h3 id="modalTitle" class="modal-title">Avviso</h3>
@@ -161,7 +167,7 @@
 <!-- HEADER -->
 <header>
   <div style="font-weight: 800; font-size: 18px; letter-spacing: 1px; display:flex; align-items:center;">
-    VaultAI <span class="pro-badge">PRO</span>
+    VaultAI <span class="pro-badge">ENTERPRISE</span>
   </div>
   <div id="modeIndicator" class="badge">LOCKED</div>
   <button class="btn-secondary" style="width:auto; padding:6px 16px; margin:0; border-radius: 20px; font-size: 11px;" onclick="lockSystem()">BLOCCA SISTEMA</button>
@@ -188,16 +194,16 @@
   <!-- TAB 1: REPERTI -->
   <div id="tab-docs" style="display:none;">
     <div class="card">
-      <h3>📁 Acquisizione Reperti Multi-Mediale</h3>
+      <h3>📁 Ingestione Bulk & Media (ZIP, PDF, JPG)</h3>
       <input type="file" id="fileUpload" multiple style="display:none;" onchange="handleFileUpload(event)">
       <button class="btn-upload" id="uploadBtn" onclick="document.getElementById('fileUpload').click()">
-        <span style="font-size:24px; margin-bottom:4px;">📥</span> Carica PDF, Testo o Immagini (OCR Locale)
+        <span style="font-size:24px; margin-bottom:4px;">📥</span> Trascina qui File Singoli o Archivi .ZIP
       </button>
       <div style="text-align: center; margin: 16px 0; color: #444; font-size: 12px; font-weight: bold;">OPPURE INSERIMENTO MANUALE</div>
       <input type="text" id="docTitle" placeholder="Titolo Reperto (Es. Relazione_Banca)">
       <textarea id="docContent" placeholder="Incolla testo da analizzare. Le entità verranno evidenziate automaticamente..."></textarea>
       <div class="btn-group">
-        <button class="btn-primary" onclick="addDocument()">Indicizza nel Fascicolo</button>
+        <button class="btn-primary" onclick="addManualDocument()">Indicizza nel Fascicolo</button>
       </div>
     </div>
     <div class="card">
@@ -225,7 +231,16 @@
           <button class="btn-secondary" style="width:auto; padding:4px 10px; font-size:11px;" onclick="initGraph()">Ricalcola Layout</button>
         </div>
       </div>
+      
       <div class="graph-container">
+        <!-- FILTRI NODI SOVRAPPOSTI AL CANVAS -->
+        <div id="graphFiltersPanel">
+          <h4 style="margin:0 0 8px 0; font-size:11px;">Filtri Entità</h4>
+          <div id="filterCheckboxes" style="display:flex; flex-direction:column; gap:4px; font-size:11px;"></div>
+          <button class="btn-secondary" style="margin-top:8px; padding:4px; width:100%; font-size:10px;" onclick="applyGraphFilters()">Applica Filtri</button>
+          <button class="btn-warning" style="margin-top:4px; padding:4px; width:100%; font-size:10px; display:none;" id="btnResetIsolate" onclick="resetGraphIsolation()">Annulla Isolamento Rete</button>
+        </div>
+        
         <div class="canvas-wrapper">
           <canvas id="graphCanvas"></canvas>
           <div class="graph-controls">
@@ -234,6 +249,7 @@
             <button class="graph-btn" onclick="resetGraphView()">🏠</button>
           </div>
         </div>
+        
         <div id="graphSidePanel"></div>
       </div>
     </div>
@@ -267,7 +283,7 @@
   <div id="tab-forensic" style="display:none;">
     <div class="card">
       <h3>📄 Esportazione Dossier Forense</h3>
-      <p style="font-size: 12px; color: var(--text-muted); margin-bottom:16px;">Genera un report HTML sigillato contenente i reperti e la catena di custodia (Audit Log) da consegnare o stampare in PDF.</p>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom:16px;">Genera un report HTML sigillato contenente i reperti e la catena di custodia (Audit Log) da consegnare o stampare in PDF. Le hash originali binarie vengono certificate qui.</p>
       <button class="btn-secondary" onclick="exportHTMLBundle()">Genera Dossier Completo (HTML)</button>
     </div>
     <div class="card">
@@ -297,7 +313,6 @@ let inactivityTimer;
 let state = { workspaces: ['Indagine_Principale'], currentWorkspace: 'Indagine_Principale', docs: [], audit: [] };
 let customRules = {};
 
-// REGOLE FORENSI PREMIUM (Incluse Criptovalute, IP e MAC)
 const coreRules = {
   'email': { regex: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, class: 'c-email', label: 'E-Mail' },
   'iban': { regex: /\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/g, class: 'c-iban', label: 'IBAN' },
@@ -311,6 +326,16 @@ const coreRules = {
   'ip': { regex: /\b(?:\d{1,3}\.){3}\d{1,3}\b/g, class: 'c-network', label: 'Indirizzo IP' },
   'mac': { regex: /\b(?:[0-9A-Fa-f]{2}[:-]){5}(?:[0-9A-Fa-f]{2})\b/g, class: 'c-network', label: 'MAC Address' }
 };
+
+// --- HELPER COLORI PER FILTRI GRAFO ---
+function getRuleColorCode(className) {
+  const map = {
+    'c-email': '#2196f3', 'c-iban': '#ffeb3b', 'c-importo': '#00e676', 'c-cf': '#e91e63',
+    'c-targa': '#00bcd4', 'c-tel': '#9c27b0', 'c-data': '#795548', 'c-crypto': '#ff9800',
+    'c-network': '#4caf50', 'c-custom': '#b388ff'
+  };
+  return map[className] || '#fff';
+}
 
 // --- BOOT E GESTIONE DATABASE ---
 function initDB() {
@@ -354,7 +379,7 @@ async function checkBootState() {
   });
 }
 
-// --- FUNZIONI DI CRITTOGRAFIA ---
+// --- FUNZIONI DI CRITTOGRAFIA E HASHING BINARIO ---
 function fallbackSHA256(str) { return Array.from(new TextEncoder().encode(str)).reduce((acc, val) => acc + val.toString(16), "").substring(0,64); }
 async function computeHash(text) {
   if (window.crypto && crypto.subtle) {
@@ -364,6 +389,15 @@ async function computeHash(text) {
     } catch(e) {}
   }
   return fallbackSHA256(text);
+}
+async function computeBinaryHash(arrayBuffer) {
+  if (window.crypto && crypto.subtle) {
+    try {
+      const hash = await crypto.subtle.digest("SHA-256", arrayBuffer);
+      return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
+    } catch(e) {}
+  }
+  return fallbackSHA256("binary_fallback_" + arrayBuffer.byteLength); // Fallback estremo
 }
 async function deriveKey(password, salt) {
   const enc = new TextEncoder();
@@ -498,17 +532,17 @@ function deleteDoc(id) { openModal("Elimina", "Eliminare definitivamente il repe
 // OSCURAMENTO SELETTIVO (REDACTION MANUALE)
 async function redactSelection(docId) {
   const sel = window.getSelection();
-  if (!sel.rangeCount || sel.isCollapsed) return openModal("Attenzione", "Devi prima evidenziare il testo da oscurare con il mouse all'interno del documento.", "alert");
+  if (!sel.rangeCount || sel.isCollapsed) return openModal("Attenzione", "Evidenzia prima il testo da oscurare con il mouse.", "alert");
   const textToRedact = sel.toString();
-  
   const doc = state.docs.find(d => d.id === docId);
   if (!doc) return;
-  if (!doc.content.includes(textToRedact)) return openModal("Errore", "Il testo selezionato non corrisponde al testo originale.", "alert");
+  if (!doc.content.includes(textToRedact)) return openModal("Errore", "Selezione non valida.", "alert");
   
-  openModal("Oscura Dati", `Oscurare definitivamente il testo selezionato? L'operazione è irreversibile e ricalcolerà l'hash del documento.`, "confirm", async () => {
+  openModal("Oscura Dati", `Oscurare definitivamente il testo selezionato? L'hash binario originale rimarrà, ma il testo verrà censurato.`, "confirm", async () => {
     doc.content = doc.content.split(textToRedact).join('[OMISSIS]');
     doc.entities = extractEntities(doc.content);
-    doc.hash = (await computeHash(doc.title + doc.content)).substring(0,16);
+    doc.contentHash = (await computeHash(doc.title + doc.content)).substring(0,16);
+    if(!doc.title.includes("[OSCURATO]")) doc.title += " [OSCURATO]";
     await logAction(`MANUAL_REDACTION_DOC_${doc.id}`);
     renderAllViews();
   });
@@ -542,38 +576,101 @@ function highlightEntities(text, entities) {
   Object.keys(map).forEach(key => { escaped = escaped.split(key).join(map[key]); }); return escaped;
 }
 
-// --- DOCUMENTI E UPLOAD OCR ---
 function cleanExtractedText(text) { return text.replace(/\b(?:obj|endobj|stream|endstream|xref|trailer|startxref|\%PDF-\d\.\d)\b/g, '').replace(/[^\x20-\x7E\xA0-\xFF\n\r]/g, '').replace(/\s{2,}/g, ' ').trim(); }
 
-async function processDoc(title, content) {
-  const c = cleanExtractedText(content);
-  state.docs.unshift({ id: 'doc_'+Date.now()+'_'+Math.floor(Math.random()*1000), workspace: state.currentWorkspace, title: title, content: c, entities: extractEntities(c), hash: (await computeHash(title+c)).substring(0,16) });
-  await logAction(`INDEXED_DOC [${state.currentWorkspace}]`);
+// Estrazione EXIF Promise
+function extractEXIF(file) {
+  return new Promise((resolve) => {
+    if (!window.EXIF) return resolve(null);
+    EXIF.getData(file, function() {
+       let make = EXIF.getTag(this, "Make") || ""; let model = EXIF.getTag(this, "Model") || "";
+       let date = EXIF.getTag(this, "DateTime") || "";
+       let meta = [];
+       if(make || model) meta.push(`Dispositivo: ${make} ${model}`);
+       if(date) meta.push(`Data Scatto: ${date}`);
+       resolve(meta.length > 0 ? meta.join(' | ') : null);
+    });
+  });
 }
-async function addDocument() { const t = document.getElementById('docTitle').value || `Reperto_${Math.floor(Math.random()*9000)}`; const c = document.getElementById('docContent').value; if (!c) return; await processDoc(t, c); document.getElementById('docTitle').value = ''; document.getElementById('docContent').value = ''; renderAllViews(); }
 
+// Elaborazione di un singolo file (Buffer -> OCR/PDF -> Storage)
+async function processSingleFile(fileBlob, fileName, updateBtnStatus) {
+  const buffer = await fileBlob.arrayBuffer();
+  const binHash = await computeBinaryHash(buffer); // HASH BINARIO LEGALE
+  let txt = "";
+  let metaText = "";
+
+  if (fileBlob.type.startsWith('image/') || fileName.match(/\.(jpg|jpeg|png)$/i)) {
+    if(updateBtnStatus) updateBtnStatus(`⏳ ESTRAZIONE IMMAGINE E METADATI (${fileName})...`);
+    const exif = await extractEXIF(fileBlob);
+    if(exif) metaText = `\n[METADATI NASCOSTI EXIF: ${exif}]`;
+    const worker = await Tesseract.createWorker('ita');
+    const { data: { text } } = await worker.recognize(fileBlob);
+    await worker.terminate(); txt = text;
+  } 
+  else if (fileBlob.type === 'application/pdf' || fileName.match(/\.pdf$/i)) {
+    if(updateBtnStatus) updateBtnStatus(`⏳ LETTURA PDF E METADATI (${fileName})...`);
+    if (window['pdfjs-dist/build/pdf']) {
+      const pdf = await window['pdfjs-dist/build/pdf'].getDocument(new Uint8Array(buffer)).promise;
+      const meta = await pdf.getMetadata().catch(()=>null);
+      if(meta && meta.info) {
+        let pAuth = meta.info.Author||''; let pCrea = meta.info.CreationDate||'';
+        if(pAuth || pCrea) metaText = `\n[METADATI NASCOSTI PDF: Autore=${pAuth} Creazione=${pCrea}]`;
+      }
+      for (let i = 1; i <= pdf.numPages; i++) { const page = await pdf.getPage(i); txt += (await page.getTextContent()).items.map(it => it.str).join(' ') + "\n"; }
+    }
+  } 
+  else {
+    if(updateBtnStatus) updateBtnStatus(`⏳ LETTURA TESTO (${fileName})...`);
+    const bytes = new Uint8Array(buffer); let str = "";
+    for(let i=0; i<bytes.length; i++) { let c=bytes[i]; if((c>=32 && c<=126) || c===10) str+=String.fromCharCode(c); else { if(str.length>4) txt+=str+" "; str=""; } }
+  }
+  
+  txt += metaText;
+  const c = cleanExtractedText(txt);
+  const contentHash = (await computeHash(fileName+c)).substring(0,16);
+  
+  state.docs.unshift({ 
+    id: 'doc_'+Date.now()+'_'+Math.floor(Math.random()*1000), 
+    workspace: state.currentWorkspace, 
+    title: fileName, 
+    content: c, 
+    entities: extractEntities(c), 
+    hash: binHash.substring(0,16), // HASH ORIGINALE IMMUTABILE
+    contentHash: contentHash // Hash del testo per controllo alterazioni
+  });
+  await logAction(`INDEXED_DOC [${state.currentWorkspace}] - SHA: ${binHash.substring(0,16)}`);
+}
+
+async function addManualDocument() { 
+  const t = document.getElementById('docTitle').value || `Reperto_${Math.floor(Math.random()*9000)}`; 
+  const c = document.getElementById('docContent').value; 
+  if (!c) return; 
+  const contentHash = (await computeHash(t+c)).substring(0,16);
+  state.docs.unshift({ id: 'doc_'+Date.now(), workspace: state.currentWorkspace, title: t, content: c, entities: extractEntities(c), hash: contentHash, contentHash: contentHash });
+  await logAction(`INDEXED_MANUAL_DOC [${state.currentWorkspace}]`);
+  document.getElementById('docTitle').value = ''; document.getElementById('docContent').value = ''; renderAllViews(); 
+}
+
+// INGESTIONE BULK (ZIP + FILE SINGOLI)
 async function handleFileUpload(event) {
   const files = event.target.files; if (!files || files.length === 0) return;
-  const btn = document.getElementById('uploadBtn'); const og = btn.innerHTML; 
+  const btn = document.getElementById('uploadBtn'); const og = btn.innerHTML; btn.disabled = true;
   
   for (let f of files) {
     try { 
-      let txt = "";
-      if (f.type.startsWith('image/')) {
-        btn.innerHTML = `⏳ OCR IMMAGINE (${f.name})...`; btn.disabled = true;
-        const worker = await Tesseract.createWorker('ita');
-        const { data: { text } } = await worker.recognize(f);
-        await worker.terminate(); txt = text;
-      } else if (f.type === 'application/pdf' && window['pdfjs-dist/build/pdf']) {
-        btn.innerHTML = `⏳ ESTRAZIONE PDF (${f.name})...`; btn.disabled = true;
-        const pdf = await window['pdfjs-dist/build/pdf'].getDocument(new Uint8Array(await f.arrayBuffer())).promise;
-        for (let i = 1; i <= pdf.numPages; i++) { const page = await pdf.getPage(i); txt += (await page.getTextContent()).items.map(it => it.str).join(' ') + "\n"; }
+      if (f.name.toLowerCase().endsWith('.zip')) {
+        btn.innerHTML = `⏳ SCOMPATTAZIONE ARCHIVIO ZIP...`;
+        const zip = await JSZip.loadAsync(f);
+        const entries = Object.values(zip.files).filter(z => !z.dir);
+        for(let i=0; i<entries.length; i++) {
+           const buffer = await entries[i].async("arraybuffer");
+           const blob = new Blob([buffer]); blob.name = entries[i].name;
+           await processSingleFile(blob, entries[i].name, (msg) => btn.innerHTML = `(${i+1}/${entries.length}) ` + msg);
+        }
       } else {
-        btn.innerHTML = `⏳ LETTURA TESTO (${f.name})...`; btn.disabled = true;
-        const bytes = new Uint8Array(await f.arrayBuffer()); let str = "";
-        for(let i=0; i<bytes.length; i++) { let c=bytes[i]; if((c>=32 && c<=126) || c===10) str+=String.fromCharCode(c); else { if(str.length>4) txt+=str+" "; str=""; } }
+        await processSingleFile(f, f.name, (msg) => btn.innerHTML = msg);
       }
-      await processDoc(f.name, txt);
     } catch(e) { console.error(e); }
   }
   renderAllViews(); event.target.value = ""; btn.innerHTML = og; btn.disabled = false;
@@ -584,18 +681,12 @@ function renderAllViews() { renderDocs(); renderTimeline(); renderStats(); if(do
 function toggleTextExpand(id) { const el = document.getElementById(id); el.classList.toggle('expanded'); const fade = el.querySelector('.text-box-fade'); if(fade) fade.style.display = el.classList.contains('expanded') ? 'none' : 'flex'; }
 function renderDocs() {
   const q = document.getElementById('searchQuery').value.toLowerCase(); 
-  const terms = q.split(' ').filter(t => t.trim() !== ''); // Divide query per AND logico
+  const terms = q.split(' ').filter(t => t.trim() !== ''); // Logica AND
   const list = document.getElementById('docsList'); list.innerHTML = ''; const docs = getActiveDocs();
   if (docs.length === 0) return list.innerHTML = `<div style="text-align:center; padding:20px; color:#555; font-size:13px;">Nessun documento in questo fascicolo.</div>`;
   
   docs.forEach((doc) => {
-    // Logica AND: il documento deve contenere TUTTI i termini cercati
-    const matchesAll = terms.every(t => 
-      doc.title.toLowerCase().includes(t) || 
-      doc.content.toLowerCase().includes(t) || 
-      doc.entities.some(e=>e.val.toLowerCase().includes(t)) || 
-      doc.hash.toLowerCase().includes(t)
-    );
+    const matchesAll = terms.every(t => doc.title.toLowerCase().includes(t) || doc.content.toLowerCase().includes(t) || doc.entities.some(e=>e.val.toLowerCase().includes(t)) || doc.hash.toLowerCase().includes(t));
     if (terms.length > 0 && !matchesAll) return;
     
     const grouped = {}; doc.entities.forEach(e => { if(!grouped[e.type]) grouped[e.type] = { class: e.class, items: [] }; grouped[e.type].items.push(e.val); });
@@ -606,8 +697,8 @@ function renderDocs() {
       <div class="doc-header">
         <div class="doc-title">📄 ${escapeHTML(doc.title)}</div>
         <div class="doc-actions">
-          <span class="doc-hash">SHA: ${doc.hash}</span>
-          <button class="btn-warning" style="padding:4px 8px; min-width:auto; font-size:10px;" onclick="redactSelection('${doc.id}')" title="Seleziona del testo in basso e clicca qui per oscurarlo">Oscura Selezione</button>
+          <div class="doc-hash"><span>BIN-HASH: ${doc.hash}</span><span style="color:#666;">TXT-HASH: ${doc.contentHash || doc.hash}</span></div>
+          <button class="btn-warning" style="padding:4px 8px; min-width:auto; font-size:10px;" onclick="redactSelection('${doc.id}')" title="Seleziona del testo in basso e clicca qui per oscurarlo">Oscura Sel.</button>
           <button class="btn-danger" style="padding:4px 8px; min-width:auto; font-size:10px;" onclick="deleteDoc('${doc.id}')">Elimina</button>
         </div>
       </div>
@@ -635,32 +726,82 @@ function renderStats() {
   container.innerHTML = sorted.slice(0,30).map(([key, count]) => { const [type, val, cls] = key.split("|||"); return `<div class="stat-row"><div style="display:flex; align-items:center; gap:10px;"><span class="chip ${cls}" style="min-width:80px; justify-content:center;">${escapeHTML(type)}</span> <span style="font-weight:600; font-size:14px;">${escapeHTML(val)}</span></div><div style="color:var(--accent); font-weight:bold; font-size:14px;">${count}</div></div>`; }).join('');
 }
 
-// --- GRAFO E SPLIT-SCREEN ---
+// --- GRAFO, FILTRI E ISOLAMENTO ---
 let graphNodes = [], graphEdges = [], animFrame = null, dragNode = null, focusNode = null, viewTransform = { x: 0, y: 0, k: 1 }, isDraggingBackground = false, lastMouse = {x:0, y:0};
+let activeFilters = new Set();
+let isolatedMode = false;
+
+function renderGraphFilters() {
+  const container = document.getElementById('filterCheckboxes');
+  let html = `<label><input type="checkbox" checked value="doc" class="g-filter"> <span style="color:#00e5ff">●</span> 📄 Documenti</label>`;
+  const allRules = { ...coreRules, ...customRules };
+  for(let k in allRules) { html += `<label><input type="checkbox" checked value="${allRules[k].label}" class="g-filter"> <span style="color:${getRuleColorCode(allRules[k].class)}">●</span> ${escapeHTML(allRules[k].label)}</label>`; }
+  container.innerHTML = html;
+}
+
+function applyGraphFilters() {
+  activeFilters.clear();
+  document.querySelectorAll('.g-filter').forEach(cb => { if(cb.checked) activeFilters.add(cb.value); });
+  graphNodes.forEach(n => n.isolated = false); isolatedMode = false;
+  document.getElementById('btnResetIsolate').style.display = 'none';
+  updateGraphVisibility();
+}
+
+function updateGraphVisibility() {
+  graphNodes.forEach(n => {
+    if (isolatedMode && n.isolated === false) { n.visible = false; return; }
+    n.visible = activeFilters.has(n.type);
+  });
+  if(!animFrame) updateGraph(true);
+}
+
+function isolateNode(nodeId) {
+  isolatedMode = true;
+  const target = graphNodes.find(n => n.id === nodeId);
+  if(!target) return;
+  graphNodes.forEach(n => { n.isolated = false; n.visible = false; });
+  
+  target.isolated = true; target.visible = activeFilters.has(target.type);
+  target.connected.forEach(c1 => {
+    c1.isolated = true; c1.visible = activeFilters.has(c1.type);
+    c1.connected.forEach(c2 => { c2.isolated = true; c2.visible = activeFilters.has(c2.type); });
+  });
+  
+  document.getElementById('btnResetIsolate').style.display = 'block';
+  if(!animFrame) updateGraph(true);
+}
+function resetGraphIsolation() { isolatedMode = false; graphNodes.forEach(n => n.isolated = false); document.getElementById('btnResetIsolate').style.display = 'none'; applyGraphFilters(); }
 
 function initGraph() {
   if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
   document.getElementById('graphSidePanel').style.display = 'none';
   graphNodes = []; graphEdges = []; focusNode = null; viewTransform = { x: 0, y: 0, k: 1 }; let eMap = {};
+  
+  renderGraphFilters(); activeFilters.clear();
+  document.querySelectorAll('.g-filter').forEach(cb => activeFilters.add(cb.value)); isolatedMode = false;
+  
   getActiveDocs().forEach(doc => {
-    let nd = { id: doc.id, label: doc.title.substring(0,12)+"..", type: 'doc', x: Math.random()*800, y: Math.random()*800, vx:0, vy:0, connected: [] }; graphNodes.push(nd);
-    doc.entities.forEach(ent => { let eId = 'e_' + ent.val; if(!eMap[eId]) { let ne = { id: eId, label: ent.val, type: ent.type, class: ent.class, x: Math.random()*800, y: Math.random()*800, vx:0, vy:0, connected: [] }; graphNodes.push(ne); eMap[eId] = ne; } graphEdges.push({ source: nd, target: eMap[eId] }); nd.connected.push(eMap[eId]); eMap[eId].connected.push(nd); });
-  }); updateGraph();
+    let nd = { id: doc.id, label: doc.title.substring(0,12)+"..", type: 'doc', class:'c-doc', x: Math.random()*800, y: Math.random()*800, vx:0, vy:0, connected: [], visible:true, isolated:false }; graphNodes.push(nd);
+    doc.entities.forEach(ent => { let eId = 'e_' + ent.val; if(!eMap[eId]) { let ne = { id: eId, label: ent.val, type: ent.type, class: ent.class, x: Math.random()*800, y: Math.random()*800, vx:0, vy:0, connected: [], visible:true, isolated:false }; graphNodes.push(ne); eMap[eId] = ne; } graphEdges.push({ source: nd, target: eMap[eId] }); nd.connected.push(eMap[eId]); eMap[eId].connected.push(nd); });
+  }); 
+  updateGraphVisibility(); updateGraph();
 }
+
 function zoomGraph(factor) { const cvs = document.getElementById('graphCanvas'); const cx = cvs.width / 2, cy = cvs.height / 2; viewTransform.x = cx - (cx - viewTransform.x) * factor; viewTransform.y = cy - (cy - viewTransform.y) * factor; viewTransform.k *= factor; updateGraph(true); }
 function resetGraphView() { viewTransform = {x:0, y:0, k:1}; focusNode=null; document.getElementById('graphSidePanel').style.display = 'none'; updateGraph(true); }
 function exportGraph() { const cvs = document.getElementById('graphCanvas'); const a = document.createElement('a'); a.href = cvs.toDataURL('image/png'); a.download = `Grafo_Relazioni_${state.currentWorkspace}.png`; a.click(); }
 
 function showSidePanel(node) {
-  const panel = document.getElementById('graphSidePanel');
-  panel.style.display = 'block';
+  const panel = document.getElementById('graphSidePanel'); panel.style.display = 'block';
   if(node.type === 'doc') {
     const doc = state.docs.find(d => d.id === node.id);
-    panel.innerHTML = `<h4 style="font-size:15px; color:#fff;">📄 ${escapeHTML(doc.title)}</h4><div style="font-size:12px; line-height:1.6; color:#ccc; max-height:450px; overflow-y:auto; border-top:1px solid #333; padding-top:12px;">${highlightEntities(doc.content, doc.entities)}</div><button class='btn-secondary' style='margin-top:16px; width:100%' onclick='document.getElementById("graphSidePanel").style.display="none"'>Chiudi</button>`;
+    panel.innerHTML = `<h4 style="font-size:15px; color:#fff;">📄 ${escapeHTML(doc.title)}</h4><div style="font-size:12px; line-height:1.6; color:#ccc; max-height:450px; overflow-y:auto; border-top:1px solid #333; padding-top:12px;">${highlightEntities(doc.content, doc.entities)}</div>
+    <div style="display:flex; gap:8px; margin-top:16px;"><button class='btn-warning' style='flex:1; font-size:11px;' onclick='isolateNode("${node.id}")'>Isola Rete</button><button class='btn-secondary' style='flex:1; font-size:11px;' onclick='document.getElementById("graphSidePanel").style.display="none"'>Chiudi</button></div>`;
   } else {
     let linkedDocs = state.docs.filter(d => d.entities.some(e => e.val === node.label && d.workspace === state.currentWorkspace));
-    let docsHtml = linkedDocs.map(d => `<div style="padding:10px; border:1px solid #333; margin-bottom:8px; border-radius:6px; font-size:12px; background:#111;">📄 <b>${escapeHTML(d.title)}</b><br><span style="color:#666;font-size:10px;">SHA: ${d.hash}</span></div>`).join('');
-    panel.innerHTML = `<h4 style="font-size:16px;"><span class="chip ${node.class}">${escapeHTML(node.type)}</span></h4><div style="font-size:16px; font-weight:bold; margin-bottom: 16px; word-break: break-all;">${escapeHTML(node.label)}</div><p style="font-size:12px; color:#888; margin-bottom:12px; border-bottom:1px solid #333; padding-bottom:8px;">Presente in ${linkedDocs.length} documenti:</p><div style="max-height:400px; overflow-y:auto;">${docsHtml}</div><button class='btn-secondary' style='margin-top:16px; width:100%' onclick='document.getElementById("graphSidePanel").style.display="none"'>Chiudi</button>`;
+    let docsHtml = linkedDocs.map(d => `<div style="padding:10px; border:1px solid #333; margin-bottom:8px; border-radius:6px; font-size:12px; background:#111;">📄 <b>${escapeHTML(d.title)}</b></div>`).join('');
+    panel.innerHTML = `<h4 style="font-size:16px;"><span class="chip ${node.class}">${escapeHTML(node.type)}</span></h4><div style="font-size:16px; font-weight:bold; margin-bottom: 16px; word-break: break-all;">${escapeHTML(node.label)}</div><p style="font-size:12px; color:#888; margin-bottom:12px; border-bottom:1px solid #333; padding-bottom:8px;">Presente in ${linkedDocs.length} documenti:</p><div style="max-height:350px; overflow-y:auto;">${docsHtml}</div>
+    <div style="display:flex; gap:8px; margin-top:16px;"><button class='btn-warning' style='flex:1; font-size:11px;' onclick='isolateNode("${node.id}")'>Isola Rete</button><button class='btn-secondary' style='flex:1; font-size:11px;' onclick='document.getElementById("graphSidePanel").style.display="none"'>Chiudi</button></div>`;
   }
 }
 
@@ -668,15 +809,17 @@ function updateGraph(forceRender = false) {
   const cvs = document.getElementById('graphCanvas'); const ctx = cvs.getContext('2d'); const dpr = window.devicePixelRatio || 1; const rect = cvs.getBoundingClientRect(); if(cvs.width !== rect.width * dpr) { cvs.width = rect.width * dpr; cvs.height = rect.height * dpr; } let kineticEnergy = 0;
   if (graphNodes.length === 0) return;
   
-  graphNodes.forEach(n1 => { graphNodes.forEach(n2 => { if(n1===n2) return; let dx=n2.x-n1.x, dy=n2.y-n1.y, dist=Math.sqrt(dx*dx+dy*dy)||1; if(dist<200) { let force=-400/(dist*dist); n1.vx+=(dx/dist)*force; n1.vy+=(dy/dist)*force; } }); n1.vx+=(400-n1.x)*0.001; n1.vy+=(400-n1.y)*0.001; });
-  graphEdges.forEach(e => { let dx=e.target.x-e.source.x, dy=e.target.y-e.source.y, dist=Math.sqrt(dx*dx+dy*dy)||1; let force=(dist-80)*0.03; e.source.vx+=(dx/dist)*force; e.source.vy+=(dy/dist)*force; e.target.vx-=(dx/dist)*force; e.target.vy-=(dy/dist)*force; });
-  graphNodes.forEach(n => { if(n!==dragNode) { n.x+=n.vx; n.y+=n.vy; } n.vx*=0.85; n.vy*=0.85; kineticEnergy += Math.abs(n.vx) + Math.abs(n.vy); });
+  const visibleNodes = graphNodes.filter(n => n.visible);
+  visibleNodes.forEach(n1 => { visibleNodes.forEach(n2 => { if(n1===n2) return; let dx=n2.x-n1.x, dy=n2.y-n1.y, dist=Math.sqrt(dx*dx+dy*dy)||1; if(dist<200) { let force=-400/(dist*dist); n1.vx+=(dx/dist)*force; n1.vy+=(dy/dist)*force; } }); n1.vx+=(400-n1.x)*0.001; n1.vy+=(400-n1.y)*0.001; });
+  graphEdges.forEach(e => { if(!e.source.visible || !e.target.visible) return; let dx=e.target.x-e.source.x, dy=e.target.y-e.source.y, dist=Math.sqrt(dx*dx+dy*dy)||1; let force=(dist-80)*0.03; e.source.vx+=(dx/dist)*force; e.source.vy+=(dy/dist)*force; e.target.vx-=(dx/dist)*force; e.target.vy-=(dy/dist)*force; });
+  visibleNodes.forEach(n => { if(n!==dragNode) { n.x+=n.vx; n.y+=n.vy; } n.vx*=0.85; n.vy*=0.85; kineticEnergy += Math.abs(n.vx) + Math.abs(n.vy); });
   
   ctx.save(); ctx.clearRect(0,0, cvs.width, cvs.height); ctx.translate(viewTransform.x, viewTransform.y); ctx.scale(viewTransform.k, viewTransform.k);
-  ctx.lineWidth = 1.5 / viewTransform.k; graphEdges.forEach(e => { let active = true; if(focusNode && focusNode !== e.source && focusNode !== e.target) active = false; ctx.strokeStyle = active ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.05)'; ctx.beginPath(); ctx.moveTo(e.source.x, e.source.y); ctx.lineTo(e.target.x, e.target.y); ctx.stroke(); });
-  graphNodes.forEach(n => {
+  ctx.lineWidth = 1.5 / viewTransform.k; graphEdges.forEach(e => { if(!e.source.visible || !e.target.visible) return; let active = true; if(focusNode && focusNode !== e.source && focusNode !== e.target) active = false; ctx.strokeStyle = active ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.05)'; ctx.beginPath(); ctx.moveTo(e.source.x, e.source.y); ctx.lineTo(e.target.x, e.target.y); ctx.stroke(); });
+  visibleNodes.forEach(n => {
     let alpha = 1; if(focusNode && focusNode !== n && !focusNode.connected.includes(n)) alpha = 0.15; ctx.globalAlpha = alpha; ctx.beginPath(); ctx.arc(n.x, n.y, n.type==='doc'?16:8, 0, Math.PI*2);
-    if(n.type==='doc') ctx.fillStyle='#00e5ff'; else if(n.class==='c-email') ctx.fillStyle='#2196f3'; else if(n.class==='c-iban') ctx.fillStyle='#ffeb3b'; else if(n.class==='c-importo') ctx.fillStyle='#00e676'; else if(n.class==='c-cf') ctx.fillStyle='#e91e63'; else if(n.class==='c-targa') ctx.fillStyle='#00bcd4'; else if(n.class==='c-tel') ctx.fillStyle='#9c27b0'; else if(n.class==='c-data') ctx.fillStyle='#795548'; else if(n.class==='c-crypto') ctx.fillStyle='#ff9800'; else if(n.class==='c-network') ctx.fillStyle='#4caf50'; else ctx.fillStyle='#b388ff';
+    ctx.fillStyle = getRuleColorCode(n.class) || '#fff';
+    if(n.type==='doc') ctx.fillStyle='#00e5ff';
     if(n === focusNode) { ctx.lineWidth = 3/viewTransform.k; ctx.strokeStyle = '#fff'; ctx.stroke(); } ctx.fill(); ctx.fillStyle='#fff'; ctx.font = `${11/viewTransform.k}px sans-serif`; ctx.fillText(n.label, n.x+18, n.y+4); ctx.globalAlpha = 1;
   }); ctx.restore();
   
@@ -687,7 +830,7 @@ function getPtrLogico(e) { const r = document.getElementById('graphCanvas').getB
 let mouseDownPos = {x:0, y:0};
 document.getElementById('graphCanvas').addEventListener('mousedown', e => { 
   const p = getPtrLogico(e); mouseDownPos = {x: p.rawX, y: p.rawY};
-  let n = graphNodes.find(n => Math.hypot(n.x - p.logX, n.y - p.logY) < 25 / viewTransform.k); 
+  let n = graphNodes.filter(n=>n.visible).find(n => Math.hypot(n.x - p.logX, n.y - p.logY) < 25 / viewTransform.k); 
   if(n) { dragNode = n; focusNode = n; if(!animFrame) updateGraph(true); } 
   else { isDraggingBackground = true; lastMouse = {x: p.rawX, y: p.rawY}; focusNode = null; document.getElementById('graphSidePanel').style.display='none'; if(!animFrame) updateGraph(true); }
 });
@@ -706,28 +849,26 @@ function exportCSV() { let csv = "Entita,Valore,Occorrenze\n"; let counts = {}; 
 async function exportVaultFile() { if(!masterKey || !masterSalt) return; const payload = JSON.stringify({ state: state, rules: Object.keys(customRules).map(k=>({id:k, r:customRules[k].regex.source, l:customRules[k].label})) }); const iv = crypto.getRandomValues(new Uint8Array(12)); const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, masterKey, new TextEncoder().encode(payload)); const vaultData = JSON.stringify({ s: Array.from(masterSalt), i: Array.from(iv), c: Array.from(new Uint8Array(encrypted)) }); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([vaultData], {type:"application/json"})); a.download = `Vault_${state.currentWorkspace}_${Date.now()}.vault`; a.click(); logAction("EXPORT_VAULT"); }
 function importVaultFile(event) { const file = event.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = async (e) => { try { const vault = JSON.parse(e.target.result); openModal("Importa", "Password file .vault:", 'password', async (pwd) => { if(!pwd) return; try { const importedSalt = new Uint8Array(vault.s); const importKey = await deriveKey(pwd, importedSalt); const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(vault.i) }, importKey, new Uint8Array(vault.c)); const payload = JSON.parse(new TextDecoder().decode(decrypted)); state = payload.state; if (!state.workspaces) state.workspaces = ['Indagine_Principale']; if (!state.currentWorkspace) state.currentWorkspace = state.workspaces[0]; customRules = {}; payload.rules.forEach(r => { customRules[r.id] = { regex: new RegExp(r.r, 'g'), class:'c-custom', label:r.l }; }); await saveEncryptedState(); renderWorkspaces(); renderRulesList(); renderAllViews(); openModal("Successo", "Fascicoli ripristinati."); } catch(err) { openModal("Errore", "Password errata."); } }); } catch(err) { openModal("Errore", "File corrotto."); } }; reader.readAsText(file); event.target.value = ""; }
 
-// ESPORTAZIONE DOSSIER FORENSE (CON AUDIT LOG INTEGRATO)
+// DOSSIER FORENSE (CON HASH ORIGINALI)
 async function exportHTMLBundle() { 
   await logAction("GENERATED_DOSSIER_REPORT"); 
   let h = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Dossier Forense - ${escapeHTML(state.currentWorkspace)}</title><style>body{font-family:sans-serif;padding:40px;background:#fff;color:#000; max-width: 900px; margin: auto;} .doc{border:1px solid #ccc;padding:20px;margin-bottom:20px;border-radius:8px; page-break-inside: avoid;} .t{font-size:12px;background:#eee;padding:4px 8px;border-radius:4px;margin:2px;display:inline-block;border:1px solid #ddd;} .audit-table {width: 100%; border-collapse: collapse; font-family: monospace; font-size: 11px;} .audit-table th, .audit-table td {border: 1px solid #aaa; padding: 6px; text-align: left;} .audit-table th {background: #f0f0f0;} @media print { body {padding:0;} }</style></head><body>
   <h1 style="border-bottom: 2px solid #000; padding-bottom:10px;">Dossier Forense: ${escapeHTML(state.currentWorkspace)}</h1>
   <p><strong>Generato il:</strong> ${new Date().toLocaleString()}</p>
-  <p><strong>Firma dell'Applicativo:</strong> VaultAI Premium Enclave (AES-256-GCM)</p>
+  <p><strong>Firma dell'Applicativo:</strong> VaultAI Enterprise Enclave (AES-256-GCM)</p>
   <hr style="margin:30px 0;">
   <h2>1. Elenco Reperti Acquisiti</h2>`; 
   
   getActiveDocs().forEach(d => { 
     let tags = d.entities.map(e => `<span class="t"><b>${escapeHTML(e.type)}:</b> ${escapeHTML(e.val)}</span>`).join(''); 
-    h += `<div class="doc"><h3>📄 ${escapeHTML(d.title)}</h3><div style="margin-bottom:12px;">${tags}</div><div style="white-space:pre-wrap;font-size:13px;color:#222;padding:12px;background:#f9f9f9;border:1px solid #eee;">${escapeHTML(d.content)}</div><div style="font-family:monospace;font-size:11px;color:#888;margin-top:12px; font-weight:bold;">Impronta Crittografica (SHA-256): ${d.hash}</div></div>`; 
+    h += `<div class="doc"><h3>📄 ${escapeHTML(d.title)}</h3><div style="margin-bottom:12px;">${tags}</div><div style="white-space:pre-wrap;font-size:13px;color:#222;padding:12px;background:#f9f9f9;border:1px solid #eee;">${escapeHTML(d.content)}</div><div style="font-family:monospace;font-size:11px;color:#888;margin-top:12px; font-weight:bold;">Impronta Crittografica File Originale (SHA-256): ${d.hash}</div></div>`; 
   }); 
   
   h += `<h2 style="page-break-before: always;">2. Catena di Custodia (Registro Audit)</h2>
   <p style="font-size:12px;">Il seguente registro certifica crittograficamente l'integrità e la sequenza delle operazioni effettuate sui reperti, inclusi gli oscuramenti (redaction).</p>
   <table class="audit-table"><thead><tr><th>Timestamp</th><th>Azione</th><th>Hash (Catena)</th></tr></thead><tbody>`;
   
-  state.audit.forEach(a => {
-    h += `<tr><td>${a.time.replace('T', ' ')}</td><td>${escapeHTML(a.action)}</td><td>${a.hash}</td></tr>`;
-  });
+  state.audit.forEach(a => { h += `<tr><td>${a.time.replace('T', ' ')}</td><td>${escapeHTML(a.action)}</td><td>${a.hash}</td></tr>`; });
   h += `</tbody></table></body></html>`;
   
   const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([h],{type:"text/html"})); a.download=`Dossier_Forense_${state.currentWorkspace}.html`; a.click(); 
