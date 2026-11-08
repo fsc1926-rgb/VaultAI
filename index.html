@@ -6,6 +6,13 @@
 <meta name="theme-color" content="#000000">
 <title>VaultAI - Enterprise Forensic Enclave</title>
 
+<!-- PWA Manifest e Icone Apple -->
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VaultAI">
+<link rel="apple-touch-icon" href="icon-192.png">
+
 <!-- Librerie Esterne (PDF, OCR, ZIP, EXIF) - 100% Client-Side -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -873,6 +880,20 @@ async function exportHTMLBundle() {
   
   const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([h],{type:"text/html"})); a.download=`Dossier_Forense_${state.currentWorkspace}.html`; a.click(); 
 }
+</script>
+  <!-- REGISTRAZIONE SERVICE WORKER PER PWA E SUPPORTO OFFLINE -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(registration => {
+          console.log('Service Worker registrato con successo:', registration.scope);
+        })
+        .catch(error => {
+          console.log('Registrazione Service Worker fallita:', error);
+        });
+    });
+  }
 </script>
 </body>
 </html>
